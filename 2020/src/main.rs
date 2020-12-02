@@ -1,5 +1,6 @@
 use std::env;
 mod day1;
+mod day2;
 
 fn main() {
     println!("Start");
@@ -21,6 +22,8 @@ fn main() {
     let result: String = match problem {
         1 => day1::run(input),
         2 => day1::run_second(input),
+        3 => day2::run(input),
+        4 => day2::run_second(input),
         _ => {
             eprintln!("Not implemented yet");
             return;
