@@ -1,6 +1,7 @@
 use std::env;
 mod day1;
 mod day2;
+mod day3;
 
 fn main() {
     println!("Start");
@@ -24,6 +25,8 @@ fn main() {
         2 => day1::run_second(input),
         3 => day2::run(input),
         4 => day2::run_second(input),
+        5 => day3::run(input),
+        6 => day3::run_second(input),
         _ => {
             eprintln!("Not implemented yet");
             return;
