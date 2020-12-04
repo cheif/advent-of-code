@@ -1,4 +1,7 @@
+use std::str::FromStr;
 use std::collections::HashMap;
+use std::ops::RangeInclusive;
+use std::marker::PhantomData;
 use regex::Regex;
 use std::i64;
 
@@ -27,43 +30,27 @@ fn pair_from_str(pair: &str) -> Option<(String, String)> {
 }
 
 fn parse_strict(input: StringyPassport) -> Option<StrictPassport> {
-    let byr = Year::from_str(&input.byr, 1920, 2002)?;
-    let iyr = Year::from_str(&input.iyr, 2010, 2020)?;
-    let eyr = Year::from_str(&input.eyr, 2020, 2030)?;
-    let hgt = Height::from_str(&input.hgt)?;
-    let hcl = HairColor::from_str(&input.hcl)?;
-    let ecl = EyeColor::from_str(&input.ecl)?;
-    let pid = Pid::from_str(&input.pid)?;
-    let result =
-        StrictPassport {
-            byr: byr,
-            iyr: iyr,
-            eyr: eyr,
-            hgt: hgt,
-            hcl: hcl,
-            ecl: ecl,
-            pid: pid
-        };
-    return Some(result);
+    return Some(StrictPassport {
+        byr: input.byr.parse().ok()?,
+        iyr: input.iyr.parse().ok()?,
+        eyr: input.eyr.parse().ok()?,
+        hgt: input.hgt.parse().ok()?,
+        hcl: input.hcl.parse().ok()?,
+        ecl: input.ecl.parse().ok()?,
+        pid: input.pid.parse().ok()?
+    });
 }
 
 fn parse_stringy(input: &HashMap<String, String>) -> Option<StringyPassport> {
-    let byr = input.get("byr")?;
-    let iyr = input.get("iyr")?;
-    let eyr = input.get("eyr")?;
-    let hgt = input.get("hgt")?;
-    let hcl = input.get("hcl")?;
-    let ecl = input.get("ecl")?;
-    let pid = input.get("pid")?;
     return Some(
         StringyPassport {
-            byr: byr.to_string(),
-            iyr: iyr.to_string(),
-            eyr: eyr.to_string(),
-            hgt: hgt.to_string(),
-            hcl: hcl.to_string(),
-            ecl: ecl.to_string(),
-            pid: pid.to_string()
+            byr: input.get("byr")?.to_string(),
+            iyr: input.get("iyr")?.to_string(),
+            eyr: input.get("eyr")?.to_string(),
+            hgt: input.get("hgt")?.to_string(),
+            hcl: input.get("hcl")?.to_string(),
+            ecl: input.get("ecl")?.to_string(),
+            pid: input.get("pid")?.to_string()
         }
     )
 }
@@ -81,9 +68,9 @@ struct StringyPassport {
 
 #[derive(Debug)]
 struct StrictPassport {
-    byr: Year,
-    iyr: Year,
-    eyr: Year,
+    byr: Year<BirthYearValidity>,
+    iyr: Year<IssueYearValidity>,
+    eyr: Year<ExpiryYearValidity>,
     hgt: Height,
     hcl: HairColor,
     ecl: EyeColor,
@@ -91,8 +78,37 @@ struct StrictPassport {
 }
 
 #[derive(Debug)]
-struct Year {
-    val: i16
+struct Year<V: ?Sized> {
+    val: i16,
+    phantom: PhantomData<V>
+}
+
+trait Validity {
+    fn range() -> RangeInclusive<i16> where Self: Sized;
+}
+
+#[derive(Debug)]
+struct BirthYearValidity {}
+impl Validity for BirthYearValidity {
+    fn range() -> RangeInclusive<i16> {
+        return 1920..=2002;
+    }
+}
+
+#[derive(Debug)]
+struct IssueYearValidity {}
+impl Validity for IssueYearValidity {
+    fn range() -> RangeInclusive<i16> {
+        return 2010..=2020;
+    }
+}
+
+#[derive(Debug)]
+struct ExpiryYearValidity {}
+impl Validity for ExpiryYearValidity {
+    fn range() -> RangeInclusive<i16> {
+        return 2020..=2030;
+    }
 }
 
 #[derive(Debug)]
@@ -122,63 +138,69 @@ struct Pid {
     val: i64
 }
 
-impl Year {
-    fn from_str(s: &str, min: i16, max: i16) -> Option<Self> {
-        let parsed = s.parse::<i16>().ok()?;
+impl<V> FromStr for Year<V> where V: Validity {
+    type Err = ();
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        let range = V::range();
+        let parsed = s.parse::<i16>().map_err(|_| ())?;
 
-        if parsed >= min && parsed <= max {
-            return Some(Year { val: parsed });
+        if range.contains(&parsed) {
+            return Ok(Year { val: parsed, phantom: PhantomData });
         } else {
-            return None;
+            return Err(());
         }
     }
 }
 
-impl Height {
-    fn from_str(s: &str) -> Option<Self> {
+impl FromStr for Height {
+    type Err = ();
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
         let re = Regex::new(r"^(\d*)(\w*)").unwrap();
-        let m = re.captures_iter(s).next()?;
-        let val: i16 = m[1].parse().ok()?;
-        let unit: String = m[2].parse().ok()?;
+        let m = re.captures_iter(s).next().ok_or(())?;
+        let val: i16 = m[1].parse().map_err(|_| ())?;
+        let unit: String = m[2].parse().map_err(|_| ())?;
         match (unit.as_str(), val) {
-            ("cm", 150..=193) => Some(Self::Metric(val)),
-            ("in", 59..=76) => Some(Self::Imperical(val)),
-            _ => None
+            ("cm", 150..=193) => Ok(Self::Metric(val)),
+            ("in", 59..=76) => Ok(Self::Imperical(val)),
+            _ => Err(())
         }
     }
 }
 
-impl HairColor {
-    fn from_str(s: &str) -> Option<Self> {
+impl FromStr for HairColor {
+    type Err = ();
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
         let re = Regex::new(r"^\#(.{6})").unwrap();
-        let m = re.captures_iter(s).next()?;
-        let val = i64::from_str_radix(&m[1], 16).ok()?;
-        return Some(HairColor { val: val });
+        let m = re.captures_iter(s).next().ok_or(())?;
+        let val = i64::from_str_radix(&m[1], 16).map_err(|_| ())?;
+        return Ok(HairColor { val: val });
     }
 }
 
-impl EyeColor {
-    fn from_str(s: &str) -> Option<Self> {
+impl FromStr for EyeColor {
+    type Err = ();
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
         match s {
-            "amb" => Some(Self::Amb),
-            "blu" => Some(Self::Blu),
-            "brn" => Some(Self::Brn),
-            "gry" => Some(Self::Gry),
-            "grn" => Some(Self::Grn),
-            "hzl" => Some(Self::Hzl),
-            "oth" => Some(Self::Oth),
-            _ => None
+            "amb" => Ok(Self::Amb),
+            "blu" => Ok(Self::Blu),
+            "brn" => Ok(Self::Brn),
+            "gry" => Ok(Self::Gry),
+            "grn" => Ok(Self::Grn),
+            "hzl" => Ok(Self::Hzl),
+            "oth" => Ok(Self::Oth),
+            _ => Err(())
         }
     }
 }
 
-impl Pid {
-    fn from_str(s: &str) -> Option<Self> {
+impl FromStr for Pid {
+    type Err = ();
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
         if s.len() != 9 {
-            return None
+            return Err(())
         }
-        Some(Pid {
-            val: s.parse().ok()?
+        Ok(Pid {
+            val: s.parse().map_err(|_| ())?
         })
     }
 }
