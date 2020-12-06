@@ -4,6 +4,7 @@ mod day2;
 mod day3;
 mod day4;
 mod day5;
+mod day6;
 
 fn main() {
     println!("Start");
@@ -33,6 +34,8 @@ fn main() {
         8 => day4::run_second(input),
         9 => day5::run(input),
         10 => day5::run_second(input),
+        11 => day6::run(input),
+        12 => day6::run_second(input),
         _ => {
             eprintln!("Not implemented yet");
             return;
