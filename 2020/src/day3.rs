@@ -1,18 +1,16 @@
 
-pub fn run(input: String) -> String {
-    return trees_for_strategy(&input, &Strategy { right: 3, down: 1 }).to_string();
-}
-
-pub fn run_second(input: String) -> String {
-    let strategies: Vec<Strategy> = vec![
+pub fn run(input: String) -> Vec<usize> {
+    let all_strategies: Vec<Strategy> = vec![
         Strategy { right: 1, down: 1 },
         Strategy { right: 3, down: 1 },
         Strategy { right: 5, down: 1 },
         Strategy { right: 7, down: 1 },
         Strategy { right: 1, down: 2 }
     ];
-    let results: Vec<usize> = strategies.iter().map(|strategy| trees_for_strategy(&input, strategy)).collect();
-    return results.iter().product::<usize>().to_string();
+    return vec![
+        trees_for_strategy(&input, &Strategy { right: 3, down: 1 }),
+        all_strategies.iter().map(|strategy| trees_for_strategy(&input, strategy)).product()
+    ];
 }
 
 #[derive(Debug)]

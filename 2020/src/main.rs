@@ -1,4 +1,7 @@
 use std::env;
+use chrono;
+use chrono::Datelike;
+
 mod day1;
 mod day2;
 mod day3;
@@ -7,39 +10,28 @@ mod day5;
 mod day6;
 
 fn main() {
-    println!("Start");
     let args: Vec<String> = env::args().collect();
-    println!("No args: {}", args.len());
-    let problem: i32 = match args[1].parse() {
-        Ok(n) => n,
-        Err(_) => {
-            eprintln!("Incorrect argument type");
-            return;
-        }
-    };
-    println!("Problem: {}", problem);
-    let path = std::path::PathBuf::from(&args[2]);
+
+    let offset = chrono::FixedOffset::east(5 * 3600);
+    let today = chrono::Utc::today().with_timezone(&offset);
+
+    let problem: u32 = args.get(1).unwrap_or(&String::from("")).parse().unwrap_or(today.day());
+    let path = std::path::PathBuf::from(format!("input/{}", problem));
     let input = std::fs::read_to_string(path)
-        .expect("Could not read file");
+        .expect("Could not read input");
 
 
-    let result: String = match problem {
+    let results: Vec<usize> = match problem {
         1 => day1::run(input),
-        2 => day1::run_second(input),
-        3 => day2::run(input),
-        4 => day2::run_second(input),
-        5 => day3::run(input),
-        6 => day3::run_second(input),
-        7 => day4::run(input),
-        8 => day4::run_second(input),
-        9 => day5::run(input),
-        10 => day5::run_second(input),
-        11 => day6::run(input),
-        12 => day6::run_second(input),
+        2 => day2::run(input),
+        3 => day3::run(input),
+        4 => day4::run(input),
+        5 => day5::run(input),
+        6 => day6::run(input),
         _ => {
             eprintln!("Not implemented yet");
             return;
         }
     };
-    println!("{}", result)
+    println!("Results for {}: {:?}", problem, results);
 }

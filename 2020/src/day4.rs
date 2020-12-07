@@ -5,12 +5,12 @@ use std::marker::PhantomData;
 use regex::Regex;
 use std::i64;
 
-pub fn run(input: String) -> String {
-    return parse(input).iter().map(parse_stringy).flatten().count().to_string();
-}
-
-pub fn run_second(input: String) -> String {
-    return parse(input).iter().map(parse_stringy).flatten().map(parse_strict).flatten().count().to_string();
+pub fn run(input: String) -> Vec<usize> {
+    let stringy_passports: Vec<StringyPassport> = parse(input).iter().map(parse_stringy).flatten().collect();
+    return vec![
+        stringy_passports.len(),
+        stringy_passports.iter().map(parse_strict).flatten().count()
+    ]
 }
 
 fn parse(input: String) -> Vec<HashMap<String, String>> {
@@ -29,7 +29,7 @@ fn pair_from_str(pair: &str) -> Option<(String, String)> {
     return key.zip(val).map(|(key, val)| (key.to_string(), val.to_string()) );
 }
 
-fn parse_strict(input: StringyPassport) -> Option<StrictPassport> {
+fn parse_strict(input: &StringyPassport) -> Option<StrictPassport> {
     return Some(StrictPassport {
         byr: input.byr.parse().ok()?,
         iyr: input.iyr.parse().ok()?,

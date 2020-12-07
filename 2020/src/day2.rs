@@ -1,17 +1,12 @@
 use core::ops::Range;
 use regex::Regex;
 
-pub fn run(input: String) -> String {
+pub fn run(input: String) -> Vec<usize> {
     let policies = parse_all(input);
-    println!("Policies: {}", policies.len());
-    let valid_policies: Vec<PwWithPolicy> = policies.into_iter().filter(|p| is_valid(p)).collect();
-    return valid_policies.len().to_string();
-}
-
-pub fn run_second(input: String) -> String {
-    let policies = parse_all(input);
-    let valid_policies: Vec<PwWithPolicy> = policies.into_iter().filter(|p| is_valid_new_rules(p)).collect();
-    return valid_policies.len().to_string();
+    return vec![
+        policies.iter().filter(|p| is_valid(p)).count(),
+        policies.iter().filter(|p| is_valid_new_rules(p)).count()
+    ]
 }
 
 fn parse_all(input: String) -> Vec<PwWithPolicy> {

@@ -1,11 +1,11 @@
 use std::collections::HashSet;
 
-pub fn run(input: String) -> String {
-    return input.split("\n\n").map(unique_answers).into_iter().sum::<usize>().to_string();
-}
-
-pub fn run_second(input: String) -> String {
-    return input.split("\n\n").map(all_answered_yes_count).into_iter().sum::<usize>().to_string();
+pub fn run(input: String) -> Vec<usize> {
+    let groups = input.split("\n\n");
+    return vec![
+        groups.clone().map(unique_answers).into_iter().sum(),
+        groups.clone().map(all_answered_yes_count).into_iter().sum()
+    ];
 }
 
 fn unique_answers(group: &str) -> usize {
@@ -63,25 +63,6 @@ a
 a
 a
 
-b".to_string()), "11");
-    }
-
-    #[test]
-    fn test_run_second() {
-        assert_eq!(run_second("abc
-
-a
-b
-c
-
-ab
-ac
-
-a
-a
-a
-a
-
-b".to_string()), "6");
+b".to_string()), vec![11, 6]);
     }
 }

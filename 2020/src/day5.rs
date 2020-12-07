@@ -1,13 +1,12 @@
 use std::collections::HashSet;
+use std::convert::TryInto;
 
-pub fn run(input: String) -> String {
-    return input.lines().map(to_num).max().unwrap().to_string();
-}
-
-pub fn run_second(input: String) -> String {
+pub fn run(input: String) -> Vec<usize> {
     let taken_seats: HashSet<u32> = input.lines().map(to_num).collect();
+
+    let last_seat: u32 = taken_seats.clone().into_iter().max().unwrap();
+
     let first_seat = to_num("FFFFFFFLLL");
-    let last_seat = to_num("BBBBBBBRRR");
     let all_seats: HashSet<u32> = (first_seat..=last_seat).collect();
     let empty_seats: HashSet<&u32> = all_seats.difference(&taken_seats).collect();
     let without_siblings: Vec<&&u32> = empty_seats.iter()
@@ -15,7 +14,11 @@ pub fn run_second(input: String) -> String {
         .collect();
     assert_eq!(without_siblings.len(), 1);
 
-    return without_siblings.first().unwrap().to_string();
+
+    return vec![
+        last_seat.try_into().unwrap(),
+        without_siblings.first().unwrap().clone().clone().clone().try_into().unwrap()
+    ];
 }
 
 fn to_num(line: &str) -> u32 {
