@@ -6,7 +6,6 @@ pub fn run(input: String) -> Vec<usize> {
     let rules = rules_from(rule_strings.clone(), &HashMap::new());
     let rules_replaced = rules_from(replace_rules(rule_strings.clone()), &HashMap::new());
     let messages: Vec<&str> = split[1].lines().collect();
-    //println!("rules: {:?}", rules);
     return vec![
         valid(&messages, &rules),
         valid(&messages, &rules_replaced)
@@ -14,16 +13,8 @@ pub fn run(input: String) -> Vec<usize> {
 }
 
 fn valid(messages: &Vec<&str>, rules: &HashMap<usize, Rule>) -> usize {
-    //println!("rule 0: {:?}", rule_zero);
     let rule = &rules[&0];
-    let valid = messages.iter().filter(|m| rule.is_valid(m, rules)).count();
-    /*
-    for msg in messages.clone() {
-        let is_valid = rule_zero.is_valid(msg);
-        //println!("{} -> {}", msg, is_valid);
-    }
-    */
-    return valid;
+    return messages.iter().filter(|m| rule.is_valid(m, rules)).count();
 }
 
 fn replace_rules(lines: Vec<&str>) -> Vec<&str> {
@@ -78,27 +69,53 @@ impl Rule {
         //println!("self: {:?}, {:?}", self, others);
         //println!("is_valid: {} => {:?}", msg, result);
         return match result {
-            Some(consumed) => consumed == msg.len(),
+            Some(consumed) => consumed.iter().any(|&c| c == msg.len()),
             None => false
         }
     }
 
-    fn validate(&self, msg: &str, others: &HashMap<usize, Rule>) -> Option<usize> {
+    fn validate(&self, msg: &str, others: &HashMap<usize, Rule>) -> Option<Vec<usize>> {
+        //println!("validate: {}, {:?}", msg, self);
         let result = match self {
-            Rule::Char(c) => if msg.starts_with(&c.to_string()) { Some(1) } else { None },
-            Rule::Or(lhs, rhs) => lhs.validate(&msg, others).or(rhs.validate(&msg, others)),
-            Rule::SubRules(sub) => {
-                let mut i = 0;
-                for rule in sub.iter().map(|n| &others[n]) {
-                    match rule.validate(&msg[i..], others) {
-                        Some(consumed) => i += consumed,
-                        None => return None
-                    }
+            Rule::Char(c) => if msg.starts_with(&c.to_string()) { Some(vec![1]) } else { None },
+            // This is where the bug is?
+            Rule::Or(lhs, rhs) => {
+                let lhs_result = lhs.validate(&msg, others);
+                let rhs_result = rhs.validate(&msg, others);
+                match (lhs_result, rhs_result) {
+                    (Some(lhs), Some(rhs)) => {
+                        let mut res: Vec<usize> = lhs.clone();
+                        res.append(&mut rhs.clone());
+                        res.sort();
+                        res.dedup();
+                        return Some(res);
+                    },
+                    (x, None) | (None, x) => x,
                 }
-                return Some(i)
+            }
+            Rule::SubRules(sub) => {
+                let mut acc = vec![0 as usize];
+                let rules = sub.iter().map(|n| &others[n]);
+                for rule in rules {
+                    let mut new = vec![];
+                    for i in acc {
+                        match rule.validate(&msg[i..], others) {
+                            Some(consumed) => new.append(&mut consumed.iter().map(|c| i + c).collect()),
+                            None => ()
+                        }
+                    }
+                    acc = new;
+                }
+                acc.sort();
+                acc.dedup();
+                if acc.len() == 0 {
+                    return None;
+                } else {
+                    return Some(acc);
+                }
             }
         };
-        //println!("validate: {}, {:?} => {:?}", msg, self, result);
+        //println!("result: {}, {:?} => {:?}", msg, self, result);
         return result;
     }
 }
@@ -107,7 +124,7 @@ impl Rule {
 mod tests {
     use super::*;
 
-    //#[test]
+    #[test]
     fn test_run() {
         assert_eq!(run(r#"0: 4 1 5
 1: 2 3 | 3 2
@@ -123,7 +140,7 @@ aaabbb
 aaaabbb"#.to_string()), [2, 2]);
     }
 
-    //#[test]
+    #[test]
     fn test_run_second() {
         assert_eq!(run(r#"42: 9 14 | 10 1
 9: 14 27 | 1 26
@@ -174,7 +191,7 @@ babaaabbbaaabaababbaabababaaab
 aabbbbbaabbbaaaaaabbbbbababaaaaabbaaabba"#.to_string()), [3, 12]);
     }
 
-    //#[test]
+    #[test]
     fn test_run_single() {
         assert_eq!(run(r#"42: 9 14 | 10 1
 9: 14 27 | 1 26
