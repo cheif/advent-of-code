@@ -14,6 +14,7 @@ mod day9;
 mod day10;
 mod day11;
 mod day12;
+mod day13;
 mod day14;
 mod day15;
 mod day16;
@@ -48,6 +49,7 @@ fn main() {
         10 => day10::run(input),
         11 => day11::run(input),
         12 => day12::run(input),
+        13 => day13::run(input),
         14 => day14::run(input),
         15 => day15::run(input),
         16 => day16::run(input),
