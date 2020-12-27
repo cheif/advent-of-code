@@ -1,16 +1,61 @@
 use std::str::FromStr;
+use std::iter::FromIterator;
+use std::collections::{HashSet, HashMap};
 
 pub fn run(input: String) -> Vec<usize> {
     let tiles: Vec<_> = input.lines().map(parse).collect();
     let mut reduced: Vec<_> = tiles.iter().map(reduce).collect();
     reduced.sort();
-    let mut without_duplicates = reduced.clone();
-    without_duplicates.dedup();
-    let occurences: Vec<_> = without_duplicates.iter().map(|tile| reduced.iter().filter(|t| *t == tile).count()).collect();
-    let flipped = occurences.iter().filter(|o| *o % 2 == 1).count();
+    let black: Vec<&Tile> = occurences(&reduced).into_iter().filter_map(|(t, o)| if o % 2 == 1 { Some(t) } else { None }).collect();
     return vec![
-        flipped
+        black.len(),
+        mutate(&black).len()
     ];
+}
+
+fn mutate(tiles: &Vec<&Tile>) -> Vec<Tile> {
+    let mut current: HashSet<Tile> = HashSet::from_iter(tiles.clone().into_iter().map(|t| t.clone()));
+    for day in 1..=100 {
+        let old = current.clone();
+        let with_neighbours: HashSet<(&Tile, Vec<Tile>)> = old.iter().map(|t| (t, neighbours(t))).collect();
+        let to_remove: HashSet<&Tile> = with_neighbours.iter().filter_map(|(t, n)| {
+            let black_neighbours = n.iter().filter(|n| old.contains(*n)).count();
+            return match black_neighbours {
+                1 | 2 => None,
+                _ => Some(t.clone())
+            };
+        }).collect();
+        let neighbours: Vec<Tile> = with_neighbours.into_iter()
+            .map(|(_, n)| n).flatten()
+            .filter(|t| !old.contains(t)).collect();
+        let with_occurences = occurences(&neighbours);
+        let to_add: HashSet<Tile> = with_occurences.into_iter()
+            .filter_map(|(tile, occ)| if occ == 2 { Some(tile) } else { None })
+            .map(|t| t.clone()).collect();
+
+        current = old
+            .union(&to_add)
+            .collect::<HashSet<&Tile>>()
+            .difference(&to_remove)
+            .map(|t| t.clone().clone()).collect();
+
+
+        if day <= 10 || day % 10 == 0 {
+            println!("Day {}: {}", day, current.len());
+            //println!("To remove {:?}", to_remove.len());
+            //println!("To add {:?}", to_add.len());
+        }
+    }
+    return current.into_iter().collect();
+}
+
+fn occurences(tiles: &Vec<Tile>) -> HashMap<&Tile, usize> {
+    let mut res = HashMap::new();
+    for tile in tiles {
+        let counter = res.entry(tile).or_insert(0);
+        *counter += 1;
+    }
+    return res;
 }
 
 type Tile = Vec<Dir>;
@@ -28,6 +73,17 @@ fn parse(line: &str) -> Tile {
         }
     }
     return tile;
+}
+
+fn neighbours(tile: &Tile) -> Vec<Tile> {
+    return vec![Dir::E, Dir::W, Dir::SE, Dir::SW, Dir::NW, Dir::NE].iter()
+        .map(|d| {
+            let mut new = tile.clone();
+            new.push(d.clone());
+            return new
+        })
+        .map(|t| reduce(&t))
+        .collect();
 }
 
 fn reduce(tile: &Tile) -> Tile {
@@ -61,7 +117,7 @@ fn reduce(tile: &Tile) -> Tile {
     }
 }
 
-#[derive(Debug, PartialEq, Clone, PartialOrd, Ord, Eq)]
+#[derive(Debug, PartialEq, Clone, PartialOrd, Ord, Eq, Hash)]
 enum Dir {
     E,
     W,
@@ -111,6 +167,6 @@ wnwnesenesenenwwnenwsewesewsesesew
 nenewswnwewswnenesenwnesewesw
 eneswnwswnwsenenwnwnwwseeswneewsenese
 neswnwewnwnwseenwseesewsenwsweewe
-wseweeenwnesenwwwswnew".to_string()), [10]);
+wseweeenwnesenwwwswnew".to_string()), [10, 2208]);
     }
 }
