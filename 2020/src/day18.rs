@@ -1,3 +1,5 @@
+use std::fmt;
+
 pub fn run(input: String) -> Vec<usize> {
     return vec![
         input.lines().map(process).sum(),
@@ -24,11 +26,21 @@ fn process_second(line: &str) -> usize {
     return expr.eval();
 }
 
-#[derive(Debug, Clone)]
+#[derive(Clone)]
 enum Expr {
     Raw(usize),
     Plus(Box<Expr>, Box<Expr>),
     Times(Box<Expr>, Box<Expr>)
+}
+
+impl fmt::Debug for Expr {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Expr::Raw(n) => f.write_fmt(format_args!("{}", n)),
+            Expr::Plus(lhs, rhs) => f.write_fmt(format_args!("({:?} + {:?})", lhs, rhs)),
+            Expr::Times(lhs, rhs) => f.write_fmt(format_args!("({:?} * {:?})", lhs, rhs)),
+        }
+    }
 }
 
 #[derive(Debug, Clone)]
@@ -63,7 +75,6 @@ trait Tokenizer {
                     i += closing - i;
                 },
                 c => tokens.push(Token::Num(c.to_digit(10).unwrap() as usize)),
-                _ => panic!()
             }
             i += 1;
         }
