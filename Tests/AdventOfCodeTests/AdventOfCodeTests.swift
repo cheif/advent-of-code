@@ -15,7 +15,9 @@ final class AdventOfCodeTests: XCTestCase {
 260
 263
 """
-        XCTAssertEqual(day1(input), (7, 5))
+        let (a, b) = day1(input)
+        XCTAssertEqual(a, 7)
+        XCTAssertEqual(b, 5)
     }
 }
 
