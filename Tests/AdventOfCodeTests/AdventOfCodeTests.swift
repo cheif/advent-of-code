@@ -19,9 +19,18 @@ final class AdventOfCodeTests: XCTestCase {
         XCTAssertEqual(a, 7)
         XCTAssertEqual(b, 5)
     }
-}
 
-func XCTAssertEqual(_ lhs: (Int, Int), _ rhs: (Int, Int)) {
-    XCTAssertEqual(lhs.0, rhs.0)
-    XCTAssertEqual(lhs.1, rhs.1)
+    func testDay2() throws {
+        let input = """
+forward 5
+down 5
+forward 8
+up 3
+down 8
+forward 2
+"""
+        let (a, b) = day2(input)
+        XCTAssertEqual(a, 150)
+        XCTAssertEqual(b, 900)
+    }
 }
