@@ -72,6 +72,48 @@ func day3(_ input: String) -> (Int, Int) {
     return (gamma * epsilon, oxygen * scrubber)
 }
 
+func day4(_ input: String) -> (Int, Int) {
+    let split = input.split(separator: "\n").map(String.init)
+    let draws = split[0].split(separator: ",").map { Int($0)! }
+    struct Board: Equatable, CustomStringConvertible {
+        let lines: [[Int]]
+        private var verticalLines: [[Int]] { (0..<5).map { offset in lines.map { $0[offset] }} }
+
+        init(lines: [String]) {
+            self.lines = lines.map { $0.split(separator: " ").map { Int($0)! }}
+        }
+
+        func winner(_ drawn: [Int]) -> Bool {
+            func hasBingo(_ lines: [[Int]]) -> Bool {
+                return lines.filter { $0.allSatisfy(drawn.contains) }.count > 0
+            }
+            return hasBingo(lines) || hasBingo(verticalLines)
+        }
+
+        func score(_ drawn: [Int]) -> Int {
+            lines.flatMap { $0 }.filter { !drawn.contains($0) }.sum * drawn.last!
+        }
+
+        var description: String {
+            lines.map { $0.map(String.init).joined(separator: " ") }.joined(separator: "\n")
+        }
+    }
+    let boards = Array(split.suffix(from: 1)).chunked(into: 5).map(Board.init)
+
+    var drawn: [Int] = []
+    var winners: [(board: Board, drawn: [Int])] = []
+    for current in draws {
+        drawn.append(current)
+        let contenders = boards.filter { !winners.map(\.board).contains($0) }
+        winners.append(contentsOf: contenders.filter { $0.winner(drawn) }.map { ($0, drawn) })
+        if winners.count == boards.count {
+            break
+        }
+    }
+    let scores = winners.map { $0.board.score($0.drawn) }
+    return (scores[0], scores.last!)
+}
+
 extension Character {
     var bitInverse: Character { self == "1" ? "0" : "1" }
 }
@@ -149,5 +191,13 @@ private extension Array where Element: Numeric, Element: Comparable {
             }
         }
         return reduced.0
+    }
+}
+
+extension Array {
+    func chunked(into size: Int) -> [[Element]] {
+        return stride(from: 0, to: count, by: size).map {
+            Array(self[$0 ..< Swift.min($0 + size, count)])
+        }
     }
 }
