@@ -114,22 +114,75 @@ func day4(_ input: String) -> (Int, Int) {
     return (scores[0], scores.last!)
 }
 
+func day5(_ input: String) -> (Int, Int) {
+    let lines = input.split(separator: "\n").map(Line.init(arrowSeparated:))
+    let horizontalVerticalOverlaps = lines
+        .flatMap { $0.covers(includeDiagonal: false) }
+        .occurances()
+        .filter { _, count in count > 1 }.count
+    let diagonalOverlaps = lines
+        .flatMap { $0.covers(includeDiagonal: true) }
+        .occurances()
+        .filter { _, count in count > 1 }.count
+    return (horizontalVerticalOverlaps, diagonalOverlaps)
+}
+
+struct Point: Hashable, CustomStringConvertible {
+    let x: Int
+    let y: Int
+
+    var description: String { "Point(\(x), \(y))" }
+}
+
+struct Line: Hashable {
+    let p1: Point
+    let p2: Point
+
+    init<S: StringProtocol>(arrowSeparated string: S) {
+        let points = string.components(separatedBy: " -> ")
+            .map { string -> Point in
+                let splits = string.split(separator: ",")
+                return .init(x: Int(splits[0])!, y: Int(splits[1])!)
+            }
+        p1 = points[0]
+        p2 = points[1]
+    }
+
+    func covers(includeDiagonal: Bool) -> [Point] {
+        let xs = stride(from: p1.x, to: p2.x, by: p1.x < p2.x ? 1 : -1) + [p2.x]
+        let ys = stride(from: p1.y, to: p2.y, by: p1.y < p2.y ? 1 : -1) + [p2.y]
+        if p1.y == p2.y {
+            return xs.map { Point(x: $0, y: p1.y) }
+        } else if p1.x == p2.x {
+            return ys.map { Point(x: p1.x, y: $0) }
+        } else if includeDiagonal {
+            return zip(xs, ys).map { Point(x: $0, y: $1) }
+        } else {
+            return []
+        }
+    }
+}
+
 extension Character {
     var bitInverse: Character { self == "1" ? "0" : "1" }
 }
 
 extension Array where Element: Hashable {
     func mostCommon() throws -> Element? {
-        try reduce([:]) { acc, curr -> [Element: Int] in
-            let count = acc[curr] ?? 0
-            return acc.merging([curr: count + 1], uniquingKeysWith: { Swift.max($0, $1) })
-        }.max(by: { lhs, rhs in
+        try occurances().max(by: { lhs, rhs in
             if lhs.value  == rhs.value {
                 throw Error.equal
             } else {
                 return lhs.value < rhs.value
             }
         })?.key
+    }
+
+    func occurances() -> [Element: Int] {
+        reduce([:]) { acc, curr -> [Element: Int] in
+            let count = acc[curr] ?? 0
+            return acc.merging([curr: count + 1], uniquingKeysWith: Swift.max)
+        }
     }
 
     enum Error: Swift.Error {
