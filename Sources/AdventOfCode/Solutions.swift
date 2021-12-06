@@ -127,6 +127,22 @@ func day5(_ input: String) -> (Int, Int) {
     return (horizontalVerticalOverlaps, diagonalOverlaps)
 }
 
+func day6(_ input: String) -> (Int, Int) {
+    let initialFish = input.trimmingCharacters(in: .newlines).split(separator: ",").map { Int($0)! }
+    func simulateDay(current: [Int], day: Int) -> [Int] {
+        let first = current.first ?? 0
+        var next = current.dropFirst() + [first]
+        next[7] += first
+        return Array(next)
+    }
+    let grouped = (0...8).map { offset in
+        initialFish.filter { $0 == offset }.count
+    }
+    let after80 = (1...).lazy.reduce(grouped, simulateDay)
+    let after256 = (1...256).reduce(grouped, simulateDay)
+    return (after80.sum, after256.sum)
+}
+
 struct Point: Hashable, CustomStringConvertible {
     let x: Int
     let y: Int

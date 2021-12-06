@@ -98,4 +98,11 @@ forward 2
         XCTAssertEqual(a, 5)
         XCTAssertEqual(b, 12)
     }
+
+    func testDay6() throws {
+        let input = "3,4,3,1,2"
+        let (a, b) = day6(input)
+        XCTAssertEqual(a, 5934)
+        XCTAssertEqual(b, 26984457539)
+    }
 }
