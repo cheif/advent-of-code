@@ -138,7 +138,7 @@ func day6(_ input: String) -> (Int, Int) {
     let grouped = (0...8).map { offset in
         initialFish.filter { $0 == offset }.count
     }
-    let after80 = (1...).lazy.reduce(grouped, simulateDay)
+    let after80 = (1...80).lazy.reduce(grouped, simulateDay)
     let after256 = (1...256).reduce(grouped, simulateDay)
     return (after80.sum, after256.sum)
 }
