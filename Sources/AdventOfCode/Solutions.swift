@@ -143,6 +143,15 @@ func day6(_ input: String) -> (Int, Int) {
     return (after80.sum, after256.sum)
 }
 
+func day7(_ input: String) -> (Int, Int) {
+    let start = input.trimmingCharacters(in: .newlines).split(separator: ",").map { Int($0)! }
+    let possiblePositions = start.min()!...start.max()!
+    let distances = possiblePositions.map { position in start.map { abs($0 - position) } }
+
+    let cost2 = CachedFunc { (diff: Int) -> Int in Array((0...diff)).sum }
+    return (distances.map(\.sum).min()!, distances.map { $0.map(cost2).sum }.min()!)
+}
+
 struct Point: Hashable, CustomStringConvertible {
     let x: Int
     let y: Int
@@ -267,6 +276,20 @@ extension Array {
     func chunked(into size: Int) -> [[Element]] {
         return stride(from: 0, to: count, by: size).map {
             Array(self[$0 ..< Swift.min($0 + size, count)])
+        }
+    }
+}
+
+func CachedFunc<Key: Hashable, Value>(block: @escaping (Key) -> Value) -> ((Key) -> Value) {
+    var cache = Dictionary<Key, Value>()
+
+    return { key in
+        if let cached = cache[key] {
+            return cached
+        } else {
+            let res = block(key)
+            cache[key] = res
+            return res
         }
     }
 }
