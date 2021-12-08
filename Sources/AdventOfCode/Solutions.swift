@@ -152,6 +152,51 @@ func day7(_ input: String) -> (Int, Int) {
     return (distances.map(\.sum).min()!, distances.map { $0.map(cost2).sum }.min()!)
 }
 
+func day8(_ input: String) -> (Int, Int) {
+    let lines: [(patterns: [String], values: [String])] = input.split(separator: "\n").map {
+        let split = $0.components(separatedBy: " | ")
+        return (split[0].components(separatedBy: " ").map { String($0.sorted()) }, split[1].components(separatedBy: " ").map { String($0.sorted()) })
+    }
+
+    let onesAndFoursAndSevensAndEights = lines.flatMap(\.values).filter { [2, 4, 3, 7].contains($0.count) }
+    func value(of str: String, in patterns: [String]) -> Int {
+        let zeroOrSixOrNine = patterns.filter { $0.count == 6 }
+        assert(zeroOrSixOrNine.count == 3)
+        let twoOrThreeOrFive = patterns.filter { $0.count == 5 }
+        assert(twoOrThreeOrFive.count == 3)
+        let one = patterns.first(where: { $0.count == 2 })!
+        let four = patterns.first(where: { $0.count == 4 })!
+        let nine = zeroOrSixOrNine.filter(one.hasAllCharacters).first(where: four.hasAllCharacters)!
+        let twoOrFive = twoOrThreeOrFive.filter { !one.hasAllCharacters($0) }
+        let mapping: [String: Int] = [
+            zeroOrSixOrNine.filter(one.hasAllCharacters).first(where: { !four.hasAllCharacters($0) })!: 0,
+            one: 1,
+            twoOrFive.first(where: { !$0.hasAllCharacters(nine) })!: 2,
+            twoOrThreeOrFive.first(where: one.hasAllCharacters)!: 3,
+            four: 4,
+            twoOrFive.first(where: { $0.hasAllCharacters(nine) })!: 5,
+            zeroOrSixOrNine.first(where: { !one.hasAllCharacters($0) })!: 6,
+            patterns.first(where: { $0.count == 3 })!: 7,
+            patterns.first(where: { $0.count == 7 })!: 8,
+            nine: 9
+        ]
+        return mapping[str]!
+    }
+    let values = lines
+        .map { patterns, values -> Int in
+            values.reversed().enumerated().map { exponent, string in
+                value(of: string, in: patterns) * Int(powf(10, Float(exponent)))
+            }.sum
+        }
+    return (onesAndFoursAndSevensAndEights.count, values.sum)
+}
+
+extension String {
+    func hasAllCharacters(_ other: String) -> Bool {
+        allSatisfy(other.contains)
+    }
+}
+
 struct Point: Hashable, CustomStringConvertible {
     let x: Int
     let y: Int
