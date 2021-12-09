@@ -191,6 +191,69 @@ func day8(_ input: String) -> (Int, Int) {
     return (onesAndFoursAndSevensAndEights.count, values.sum)
 }
 
+func day9(_ input: String) -> (Int, Int) {
+    let matrix = Matrix(input)
+    let lowPoints = matrix.points.filter { point in point.neighbours.allSatisfy { point.value < $0.value }}
+    let allBasins = lowPoints.map { $0.connectedNeighbours(while: { $0.value < 9 }) }
+    let sizedBasins = allBasins.map(\.count).sorted().reversed()
+    return (lowPoints.map { $0.value + 1 }.sum, sizedBasins.prefix(3).reduce(1, *))
+}
+
+struct Matrix {
+    let points: [Point]
+    init(_ input: String) {
+        let rows = input.split(separator: "\n").map { $0.map { Int(String($0))! }}
+        let coordinates = (0..<rows.count).flatMap { y in
+            (0..<rows[0].count).map { x in (x, y) } }
+        points = coordinates.map { Point(matrix: rows, coordinate: $0) }
+    }
+
+    struct Point: Hashable, CustomStringConvertible {
+        private let matrix: [[Int]]
+        let x: Int
+        let y: Int
+
+        var value: Int {
+            matrix[y][x]
+        }
+
+        var description: String {
+            "Point(\(x), \(y), value=\(value))"
+        }
+
+        init(matrix: [[Int]], coordinate: (x: Int, y: Int)) {
+            self.matrix = matrix
+            self.x = coordinate.x
+            self.y = coordinate.y
+        }
+
+        var neighbours: [Point] {
+            let coordinates = [
+                (x-1, y),
+                (x+1, y),
+                (x, y-1),
+                (x, y+1)
+            ].filter { x,y in
+                matrix.indices.contains(y) && matrix[y].indices.contains(x)
+            }
+
+            return coordinates.map { Point(matrix: matrix, coordinate: $0) }
+        }
+
+        func connectedNeighbours(while predicate: (Point) -> Bool) -> Set<Point> {
+            var points = Set([self])
+            var candidates = Set(neighbours)
+            while let point = candidates.popFirst() {
+                if predicate(point) {
+                    points.insert(point)
+                    candidates.formUnion(point.neighbours.filter { !points.contains($0) })
+                }
+            }
+            return points
+        }
+    }
+}
+
 extension String {
     func hasAllCharacters(_ other: String) -> Bool {
         allSatisfy(other.contains)

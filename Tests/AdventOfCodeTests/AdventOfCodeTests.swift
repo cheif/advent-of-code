@@ -130,4 +130,17 @@ gcafb gcf dcaebfg ecagb gf abcdeg gaef cafbge fdbac fegbdc | fgae cfgab fg bagce
         XCTAssertEqual(a, 26)
         XCTAssertEqual(b, 61229)
     }
+
+    func testDay9() throws {
+        let input = """
+2199943210
+3987894921
+9856789892
+8767896789
+9899965678
+"""
+        let (a, b) = day9(input)
+        XCTAssertEqual(a, 15)
+        XCTAssertEqual(b, 1134)
+    }
 }
