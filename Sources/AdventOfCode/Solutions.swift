@@ -199,6 +199,69 @@ func day9(_ input: String) -> (Int, Int) {
     return (lowPoints.map { $0.value + 1 }.sum, sizedBasins.prefix(3).reduce(1, *))
 }
 
+func day10(_ input: String) -> (Int, Int) {
+    let lines = input.split(separator: "\n").map { $0.map { $0 as Character }}
+    let pairMapping: [Character: Character] = [
+        "(": ")",
+        "[": "]",
+        "{": "}",
+        "<": ">"
+    ]
+    func firstCorrupted(in line: [Character]) -> Character? {
+        var stack: [Character] = []
+        for char in line {
+            if ["(", "[", "{", "<"].contains(char) {
+                stack.append(char)
+            } else {
+                // Must be closing
+                guard let opening = stack.popLast() else {
+                    return nil
+                }
+                guard pairMapping[opening] == char else {
+                    return char
+                }
+            }
+        }
+        return nil
+    }
+    func corruptedPoint(for char: Character) -> Int {
+        switch char {
+        case ")": return 3
+        case "]": return 57
+        case "}": return 1197
+        case ">": return 25137
+        default: fatalError()
+        }
+    }
+    let corruptedPoints = lines.compactMap(firstCorrupted).map(corruptedPoint)
+    let nonCorruptedLines = lines.filter { firstCorrupted(in: $0) == nil }
+    let completionsNeeded = nonCorruptedLines.map { line -> [Character] in
+        let remaining: [Character] = line.reduce([]) { acc, char in
+            if pairMapping[char] != nil {
+                return acc + [char]
+            } else {
+                assert(pairMapping[acc.last!] == char)
+                return acc.dropLast()
+            }
+        }
+        return remaining.reversed().map { pairMapping[$0]! }
+    }
+    func completionPoint(for char: Character) -> Int {
+        switch char {
+        case ")": return 1
+        case "]": return 2
+        case "}": return 3
+        case ">": return 4
+        default: fatalError()
+        }
+    }
+    let completionPoints = completionsNeeded.map { completions in
+        completions.reduce(0) { total, completion in total * 5 + completionPoint(for: completion) }
+    }
+
+    return (corruptedPoints.sum, completionPoints.sorted()[(completionPoints.count - 1) / 2])
+}
+
 struct Matrix {
     let points: [Point]
     init(_ input: String) {

@@ -143,4 +143,22 @@ gcafb gcf dcaebfg ecagb gf abcdeg gaef cafbge fdbac fegbdc | fgae cfgab fg bagce
         XCTAssertEqual(a, 15)
         XCTAssertEqual(b, 1134)
     }
+
+    func testDay10() throws {
+        let input = """
+[({(<(())[]>[[{[]{<()<>>
+[(()[<>])]({[<{<<[]>>(
+{([(<{}[<>[]}>{[]{[(<()>
+(((({<>}<{<{<>}{[]{[]{}
+[[<[([]))<([[{}[[()]]]
+[{[{({}]{}}([{[{{{}}([]
+{<[[]]>}<{[{[{[]{()[[[]
+[<(<(<(<{}))><([]([]()
+<{([([[(<>()){}]>(<<{{
+<{([{{}}[<[[[<>{}]]]>[]]
+"""
+        let (a, b) = day10(input)
+        XCTAssertEqual(a, 26397)
+        XCTAssertEqual(b, 288957)
+    }
 }
