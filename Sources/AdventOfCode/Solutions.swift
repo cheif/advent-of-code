@@ -262,6 +262,63 @@ func day10(_ input: String) -> (Int, Int) {
     return (corruptedPoints.sum, completionPoints.sorted()[(completionPoints.count - 1) / 2])
 }
 
+func day11(_ input: String) -> (Int, Int) {
+    let initial: [[Int]] = input.split(separator: "\n").map { $0.map { Int(String($0))! }}
+    func getFlashing(matrix: [[Int]]) -> Set<Point> {
+        Set(matrix.enumerated().filter { $0.value > 9 }.map(\.point))
+    }
+    func simulateStep(_ matrix: [[Int]]) -> [[Int]] {
+        var increased = matrix.map { $0.map { $0 + 1 }}
+        var flashing = Set<Point>()
+        while !getFlashing(matrix: increased).isSubset(of: flashing) {
+            let new = getFlashing(matrix: increased).filter { !flashing.contains($0) }
+            for point in new.flatMap(increased.neighbours) {
+                increased[point] += 1
+            }
+            flashing.formUnion(new)
+        }
+        return increased.map { $0.map { $0 > 9 ? 0 : $0 }}
+    }
+    let steps = (1...100).reduce([initial]) { acc, step in acc + [simulateStep(acc.last!)] }
+    let flashCount = steps.map { $0.flatMap { $0 }.filter { $0 == 0 }.count }
+    var state = initial
+    let allFlash = (1...).lazy.first(where: { step in
+        state = simulateStep(state)
+        return state.flatMap { $0 }.allSatisfy { $0 == 0 }
+    })
+    return (flashCount.sum, allFlash!)
+}
+
+extension Array where Element: MutableCollection {
+    func enumerated() -> [(point: Point, value: Element.Element)] {
+        enumerated().flatMap { y, row in
+            row.enumerated().map { x, value in (point: Point(x: x, y: y), value: value) }
+        }
+    }
+
+    func neighbours(to point: Point) -> [Point] {
+        let candidates = (-1...1).flatMap { y in
+            (-1...1).map { x in
+                Point(x: point.x + x, y: point.y + y)
+            }
+        }
+        return candidates.filter(contains).filter { $0 != point }
+    }
+
+    func contains(_ point: Point) -> Bool {
+        indices.contains(point.y) && first!.indices.contains(point.x as! Element.Index)
+    }
+
+    subscript(index: Point) -> Element.Element {
+        get {
+            self[index.y][index.x as! Element.Index]
+        }
+        set(newValue) {
+            self[index.y][index.x as! Element.Index] = newValue
+        }
+    }
+}
+
 struct Matrix {
     let points: [Point]
     init(_ input: String) {
@@ -411,11 +468,13 @@ private extension String {
     }
 }
 
-private extension Array where Element: Numeric, Element: Comparable {
+private extension Collection where Element: Numeric {
     var sum: Element {
         reduce(.zero, +)
     }
+}
 
+private extension Array where Element: Numeric, Element: Comparable {
     func windowed(size: Int) -> [[Element]] {
         reduce([[]]) { acc, curr -> [[Element]] in
             let last = acc.last ?? []
