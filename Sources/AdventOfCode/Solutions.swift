@@ -300,7 +300,7 @@ func day12(_ input: String) -> (Int, Int) {
 
     func extensions(for path: Path, validityCheck: (Path) -> Bool) -> [Path] {
         let node = path.last!.end
-        let outbound = allConnections.filter { $0.start == node }
+        let outbound = allConnections.filter { $0.start == node && $0.end != "start" }
         return outbound
             .map { connection in path + [connection] }
             .filter(validityCheck)
@@ -311,13 +311,14 @@ func day12(_ input: String) -> (Int, Int) {
 
     func nodes(path: Path) -> [String] { [path[0].start] + path.map(\.end) }
     func isValidFirst(path: Path) -> Bool {
-        nodes(path: path).filter(\.isLowerCase).occurances().map(\.value).allSatisfy { $0 == 1 }
+        let lowerCaseNodes = nodes(path: path).filter(\.isLowerCase)
+        return lowerCaseNodes.count == Set(lowerCaseNodes).count
     }
 
     func isValidSecond(path: Path) -> Bool {
         let nodes = nodes(path: path)
-        let lowerCaseNodes = nodes.filter(\.isLowerCase).occurances()
-        return lowerCaseNodes.map(\.value).sum <= lowerCaseNodes.count + 1 && lowerCaseNodes["start"] == 1
+        let lowerCaseNodes = nodes.filter(\.isLowerCase)
+        return lowerCaseNodes.count <= Set(lowerCaseNodes).count + 1
     }
     let starts = allConnections.filter { $0.start == "start" }.map { [$0] }
     let paths = starts.flatMap { path in extensions(for: path, validityCheck: isValidFirst(path:)) }
@@ -327,7 +328,7 @@ func day12(_ input: String) -> (Int, Int) {
 
 extension String {
     var isLowerCase: Bool {
-        lowercased() == self
+        allSatisfy(\.isLowercase)
     }
 }
 
