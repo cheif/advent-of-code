@@ -179,4 +179,59 @@ gcafb gcf dcaebfg ecagb gf abcdeg gaef cafbge fdbac fegbdc | fgae cfgab fg bagce
         XCTAssertEqual(a, 1656)
         XCTAssertEqual(b, 195)
     }
+
+    func testDay12() throws {
+        let input = """
+start-A
+start-b
+A-c
+A-b
+b-d
+A-end
+b-end
+"""
+        let (a, b) = day12(input)
+        XCTAssertEqual(a, 10)
+        XCTAssertEqual(b, 36)
+
+        let input2 = """
+dc-end
+HN-start
+start-kj
+dc-start
+dc-HN
+LN-dc
+HN-end
+kj-sa
+kj-HN
+kj-dc
+"""
+        let (a2, b2) = day12(input2)
+        XCTAssertEqual(a2, 19)
+        XCTAssertEqual(b2, 103)
+
+        let input3 = """
+fs-end
+he-DX
+fs-he
+start-DX
+pj-DX
+end-zg
+zg-sl
+zg-pj
+pj-he
+RW-he
+fs-DX
+pj-RW
+zg-RW
+start-pj
+he-WI
+zg-he
+pj-fs
+start-RW
+"""
+        let (a3, b3) = day12(input3)
+        XCTAssertEqual(a3, 226)
+        XCTAssertEqual(b3, 3509)
+    }
 }

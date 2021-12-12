@@ -289,6 +289,48 @@ func day11(_ input: String) -> (Int, Int) {
     return (flashCount.sum, allFlash!)
 }
 
+func day12(_ input: String) -> (Int, Int) {
+    typealias Connection = (start: String, end: String)
+    typealias Path = [Connection]
+    let connections: [Connection] = input.split(separator: "\n").map {
+        let split = $0.components(separatedBy: "-")
+        return (split[0], split[1])
+    }
+    let allConnections = connections + connections.map { ($0.end, $0.start) }
+
+    func extensions(for path: Path, validityCheck: (Path) -> Bool) -> [Path] {
+        let node = path.last!.end
+        let outbound = allConnections.filter { $0.start == node }
+        return outbound
+            .map { connection in path + [connection] }
+            .filter(validityCheck)
+            .flatMap { path in
+                path.last?.end == "end" ? [path] : extensions(for: path, validityCheck: validityCheck)
+            }
+    }
+
+    func nodes(path: Path) -> [String] { [path[0].start] + path.map(\.end) }
+    func isValidFirst(path: Path) -> Bool {
+        nodes(path: path).filter(\.isLowerCase).occurances().map(\.value).allSatisfy { $0 == 1 }
+    }
+
+    func isValidSecond(path: Path) -> Bool {
+        let nodes = nodes(path: path)
+        let lowerCaseNodes = nodes.filter(\.isLowerCase).occurances()
+        return lowerCaseNodes.map(\.value).sum <= lowerCaseNodes.count + 1 && lowerCaseNodes["start"] == 1
+    }
+    let starts = allConnections.filter { $0.start == "start" }.map { [$0] }
+    let paths = starts.flatMap { path in extensions(for: path, validityCheck: isValidFirst(path:)) }
+    let pathsSecond = starts.flatMap { path in extensions(for: path, validityCheck: isValidSecond(path:)) }
+    return (paths.count, pathsSecond.count)
+}
+
+extension String {
+    var isLowerCase: Bool {
+        lowercased() == self
+    }
+}
+
 extension Array where Element: MutableCollection {
     func enumerated() -> [(point: Point, value: Element.Element)] {
         enumerated().flatMap { y, row in
