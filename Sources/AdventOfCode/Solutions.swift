@@ -326,6 +326,46 @@ func day12(_ input: String) -> (Int, Int) {
     return (paths.count, pathsSecond.count)
 }
 
+func day13(_ input: String) -> (Int, Int) {
+    let split = input.components(separatedBy: "\n\n")
+    typealias Paper = [Point]
+    let paper: Paper = split[0].split(separator: "\n").map(Point.init)
+    typealias Fold = (axis: Character, offset: Int)
+    let folds = split[1].split(separator: "\n").map { string -> Fold in
+        let split = string.split(separator: "=")
+        return (axis: split[0].last!, offset: Int(split[1])!)
+    }
+    func process(paper: Paper, fold: Fold) -> Paper {
+        let toInvert: Paper
+        let inverted: Paper
+        switch fold.axis {
+        case "x":
+            toInvert = paper.filter { $0.x > fold.offset }
+            inverted = toInvert.map { Point(x: 2*fold.offset - $0.x, y: $0.y) }
+        case "y":
+            toInvert = paper.filter { $0.y > fold.offset }
+            inverted = toInvert.map { Point(x: $0.x, y: 2*fold.offset - $0.y) }
+        default:
+            fatalError()
+        }
+        return Set(paper.filter { !toInvert.contains($0) } + inverted).sorted()
+    }
+    func print(_ paper: Paper) {
+        let maxX = paper.max()!.x
+        let maxY = paper.max(by: { $0.y < $1.y })!.y
+
+        let allPoints = (0...maxY).map { y in (0...maxX).map { x in Point(x: x, y: y) }}
+        let debug = allPoints.map { points in points.map { paper.contains($0) ? "#" : "." }.joined(separator: "")}
+        for line in debug {
+            Swift.print(line)
+        }
+    }
+    let first = process(paper: paper, fold: folds[0])
+    let finished = folds.reduce(paper, process(paper:fold:))
+    print(finished)
+    return (first.count, 0)
+}
+
 extension String {
     var isLowerCase: Bool {
         allSatisfy(\.isLowercase)
@@ -423,11 +463,22 @@ extension String {
     }
 }
 
-struct Point: Hashable, CustomStringConvertible {
+struct Point: Hashable, Comparable, CustomStringConvertible {
     let x: Int
     let y: Int
 
     var description: String { "Point(\(x), \(y))" }
+    static func < (lhs: Point, rhs: Point) -> Bool {
+        lhs.x < rhs.x ? true :
+            lhs.x == rhs.x ? lhs.y < rhs.y : false
+    }
+}
+
+extension Point {
+    init<S: StringProtocol>(_ str: S) {
+        let split = str.split(separator: ",")
+        self.init(x: Int(split[0])!, y: Int(split[1])!)
+    }
 }
 
 struct Line: Hashable {
