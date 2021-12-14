@@ -366,6 +366,44 @@ func day13(_ input: String) -> (Int, Int) {
     return (first.count, 0)
 }
 
+func day14(_ input: String) -> (Int, Int) {
+    let splits = input.components(separatedBy: "\n\n")
+    let startingTemplate = splits[0]
+    let insertionRules: [String: Character] = Dictionary(splits[1].split(separator: "\n").map { string in
+        let split = string.components(separatedBy: " -> ")
+        return (split[0], Character(split[1]))
+    }, uniquingKeysWith: { lhs, _ in lhs })
+
+    let startingPairs = (0..<startingTemplate.count - 1).map { offset in String(startingTemplate.dropFirst(offset).prefix(2)) }.occurances()
+    func newPairs(from pair: String) -> [String] {
+        if let insertion = insertionRules[pair] {
+            return [
+                String(pair.first!) + String(insertion),
+                String(insertion) + String(pair.last!)
+            ]
+        } else {
+            return [pair]
+        }
+    }
+    func step(pairs: [String: Int]) -> [String: Int] {
+        let newPairs = pairs.map { pair, amount in (newPairs(from: pair), amount) }
+        return newPairs.reduce([:]) { acc, pairs -> [String: Int] in
+            let updated = Dictionary(pairs.0.map { ($0, pairs.1) }, uniquingKeysWith: { lhs, _ in lhs })
+            return acc.merging(updated, uniquingKeysWith: { lhs, rhs in lhs + rhs })
+        }
+    }
+    func getResult(pairs: [String: Int]) -> Int {
+        // We only need to count the first value of each pair, and then add a count of one for the last ever character (that will never change)
+        let characterCounts = pairs.map { pair, value in (pair.first!, value) } + [(startingTemplate.last!, 1)]
+        let occurances = Dictionary(grouping: characterCounts, by: { $0.0 }).mapValues { $0.map(\.1).sum }.sorted(by: { lhs, rhs in lhs.value < rhs.value })
+        return occurances.last!.value - occurances.first!.value
+    }
+    let afterTenSteps = (0..<10).reduce(startingPairs) { pairs, offset in step(pairs: pairs)}
+
+    let afterFortySteps = (0..<40).reduce(startingPairs) { pairs, offset in step(pairs: pairs) }
+    return (getResult(pairs: afterTenSteps), getResult(pairs: afterFortySteps))
+}
+
 extension String {
     var isLowerCase: Bool {
         allSatisfy(\.isLowercase)
@@ -601,6 +639,10 @@ extension Array {
         return stride(from: 0, to: count, by: size).map {
             Array(self[$0 ..< Swift.min($0 + size, count)])
         }
+    }
+
+    func get(_ offset: Index) -> Element? {
+        indices.contains(offset) ? self[offset] : nil
     }
 }
 
