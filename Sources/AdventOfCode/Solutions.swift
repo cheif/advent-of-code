@@ -483,6 +483,106 @@ func day15(_ input: String) -> (Int, Int) {
     return (pathCost(for: path), pathCost(for: path2))
 }
 
+func day16(_ input: String) -> (Int, Int) {
+    let chunks: [String] = input.trimmingCharacters(in: .newlines).map { String(Int(String($0), radix: 16)!, radix: 2) }.map { String(("0000" + $0).suffix(4)) }
+    let binary: [Character] = chunks.flatMap { $0.map { $0 }}
+
+    struct Packet {
+        let version: Int
+        let type: PkgType
+
+        enum PkgType {
+            case literal(Int)
+            case op(Op, [Packet])
+        }
+
+        enum Op: Int {
+            case sum
+            case product
+            case minimum
+            case maximum
+            case greaterThan = 5
+            case lessThan = 6
+            case equalTo = 7
+        }
+    }
+    func parsePacket(input: [Character]) -> (Packet, [Character]) {
+        let version = Int(String(input.prefix(3)), radix: 2)!
+        let type = Int(String(input.dropFirst(3).prefix(3)), radix: 2)!
+        let body = Array(input.dropFirst(6))
+        let isOperator = type != 4
+        if isOperator {
+            let op = Packet.Op(rawValue: type)!
+            let lengthTypeId = Int(String(body.first!), radix: 2)!
+            let remainder = body.dropFirst()
+
+            switch lengthTypeId {
+            case 0:
+                let subPacketLength = Int(String(remainder.prefix(15)), radix: 2)!
+                var subPacketData = Array(remainder.dropFirst(15).prefix(subPacketLength))
+                var subPackets: [Packet] = []
+                while !subPacketData.isEmpty {
+                    let (packet, remainder) = parsePacket(input: subPacketData)
+                    subPackets.append(packet)
+                    subPacketData = remainder
+                }
+                return (.init(version: version, type: .op(op, subPackets)), Array(remainder.dropFirst(15 + subPacketLength)))
+            case 1:
+                let subPacketCount = Int(String(remainder.prefix(11)), radix: 2)!
+                let (subPackets, remainder) = (0..<subPacketCount).reduce(([], Array(remainder.dropFirst(11)))) { acc, _ -> ([Packet], [Character])in
+                    let (packet, remainder) = parsePacket(input: acc.1)
+                    return (acc.0 + [packet], remainder)
+                }
+                return (.init(version: version, type: .op(op, subPackets)), remainder)
+            default:
+                fatalError()
+            }
+        } else {
+            let numberOfGroups = body.chunked(into: 5).prefix(while: { $0[0] == "1" }).count + 1
+            let value = body.chunked(into: 5).prefix(numberOfGroups).map { $0.dropFirst() }.map { String($0) }.joined()
+            return (.init(version: version, type: .literal(Int(value, radix: 2)!)), Array(body.dropFirst(numberOfGroups * 5)))
+        }
+    }
+
+    func totalVersion(for packet: Packet) -> Int {
+        switch packet.type {
+        case .literal:
+            return packet.version
+        case .op(_, let subPackets):
+            return packet.version + subPackets.map(totalVersion).sum
+        }
+    }
+    func computeValue(for packet: Packet) -> Int {
+        switch packet.type {
+        case .literal(let value):
+            return value
+        case .op(let op, let subPackets):
+            let subValues = subPackets.map(computeValue)
+            switch op {
+            case .sum:
+                return subValues.sum
+            case .product:
+                return subValues.reduce(1, *)
+            case .minimum:
+                return subValues.min()!
+            case .maximum:
+                return subValues.max()!
+            case .greaterThan:
+                assert(subValues.count == 2)
+                return subValues[0] > subValues[1] ? 1 : 0
+            case .lessThan:
+                assert(subValues.count == 2)
+                return subValues[0] < subValues[1] ? 1 : 0
+            case .equalTo:
+                assert(subValues.count == 2)
+                return subValues[0] == subValues[1] ? 1 : 0
+            }
+        }
+    }
+    let packet = parsePacket(input: binary).0
+    return (totalVersion(for: packet), computeValue(for: packet))
+}
+
 extension String {
     var isLowerCase: Bool {
         allSatisfy(\.isLowercase)

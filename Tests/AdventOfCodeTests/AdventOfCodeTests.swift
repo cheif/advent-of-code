@@ -307,4 +307,20 @@ CN -> C
         XCTAssertEqual(a, 40)
         XCTAssertEqual(b, 315)
     }
+
+    func testDay16() throws {
+        XCTAssertEqual(day16("8A004A801A8002F478").0, 16)
+        XCTAssertEqual(day16("620080001611562C8802118E34").0, 12)
+        XCTAssertEqual(day16("C0015000016115A2E0802F182340").0, 23)
+        XCTAssertEqual(day16("A0016C880162017C3686B18A3D4780").0, 31)
+
+        XCTAssertEqual(day16("C200B40A82").1, 3)
+        XCTAssertEqual(day16("04005AC33890").1, 54)
+        XCTAssertEqual(day16("880086C3E88112").1, 7)
+        XCTAssertEqual(day16("CE00C43D881120").1, 9)
+        XCTAssertEqual(day16("D8005AC2A8F0").1, 1)
+        XCTAssertEqual(day16("F600BC2D8F").1, 0)
+        XCTAssertEqual(day16("9C005AC2F8F0").1, 0)
+        XCTAssertEqual(day16("9C0141080250320F1802104A08").1, 1)
+    }
 }
