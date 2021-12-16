@@ -404,6 +404,85 @@ func day14(_ input: String) -> (Int, Int) {
     return (getResult(pairs: afterTenSteps), getResult(pairs: afterFortySteps))
 }
 
+func day15(_ input: String) -> (Int, Int) {
+    typealias Path = [Point]
+    func recontructPath(mapping: [Point: Point], current: Point) -> Path {
+        var path = [current]
+        var current = current
+        while mapping[current] != nil {
+            current = mapping[current]!
+            path.append(current)
+        }
+        return path
+    }
+    func aStar(start: Point, goal: Point, estimatedCostToGoal: (Point) -> Int, getNeighbours: (Point) -> [(Point, Int)]) -> Path {
+        var openSet: Set<Point> = .init([start])
+        var cameFrom: [Point: Point] = [:]
+        var gScore: [Point: Int] = [start: 0]
+        var fScore: [Point: Int] = [start: estimatedCostToGoal(start)]
+
+        while !openSet.isEmpty {
+            let current = openSet.min(by: { fScore[$0, default: .max] < fScore[$1, default: .max] })!
+            if current == goal {
+                return recontructPath(mapping: cameFrom, current: current)
+            }
+            openSet.remove(current)
+            for (neighbour, cost) in getNeighbours(current) {
+                let tentativeGScore = gScore[current, default: .max] + cost
+                if tentativeGScore < gScore[neighbour, default: .max] {
+                    cameFrom[neighbour] = current
+                    gScore[neighbour] = tentativeGScore
+                    fScore[neighbour] = tentativeGScore + estimatedCostToGoal(neighbour)
+                    openSet.insert(neighbour)
+                }
+            }
+        }
+        return []
+    }
+
+    let startMatrix = input.split(separator: "\n").map { $0.map { Int(String($0))! }}
+    let start = Point(x: 0, y: 0)
+
+    func getNeighbours(for point: Point, endPoint: Point, pointCost: (Point) -> Int) -> [(Point, Int)] {
+        let neighbours = [
+            Point(x: point.x - 1, y: point.y),
+            Point(x: point.x + 1, y: point.y),
+            Point(x: point.x, y: point.y - 1),
+            Point(x: point.x, y: point.y + 1)
+        ].filter { $0.x >= 0 && $0.y >= 0 && $0.x <= endPoint.x && $0.y <= endPoint.y }
+        return neighbours.map { ($0, pointCost($0)) }
+    }
+
+    func pointCost(point: Point) -> Int {
+        if startMatrix.contains(point) {
+            return startMatrix[point]
+        } else {
+            var increase = 0
+            var x = point.x
+            var y = point.y
+            if point.x >= startMatrix.count {
+                increase += Int(floor(Float(point.x) / Float(startMatrix.count)))
+                x = point.x % startMatrix.count
+            }
+            if point.y >= startMatrix[0].count {
+                increase += Int(floor(Float(point.y) / Float(startMatrix[0].count)))
+                y = point.y % startMatrix[0].count
+            }
+            let originalPoint = Point(x: x, y: y)
+            return ((startMatrix[originalPoint] + increase - 1) % 9) + 1
+        }
+    }
+    func pathCost(for path: Path) -> Int { path.filter { $0 != start }.map(pointCost).sum }
+
+    let end = Point(x: startMatrix.count - 1, y: startMatrix[0].count - 1)
+    let path = aStar(start: start, goal: end, estimatedCostToGoal: { end.x - $0.x + end.y - $0.y }, getNeighbours: { point in getNeighbours(for: point, endPoint: end, pointCost: pointCost) })
+
+    let end2 = Point(x: startMatrix.count * 5 - 1, y: startMatrix[0].count * 5 - 1)
+    let path2 = aStar(start: start, goal: end2, estimatedCostToGoal: { end2.x - $0.x + end2.y - $0.y }, getNeighbours: { point in getNeighbours(for: point, endPoint: end2, pointCost: pointCost) })
+
+    return (pathCost(for: path), pathCost(for: path2))
+}
+
 extension String {
     var isLowerCase: Bool {
         allSatisfy(\.isLowercase)

@@ -289,4 +289,22 @@ CN -> C
         XCTAssertEqual(a, 1588)
         XCTAssertEqual(b, 2188189693529)
     }
+
+    func testDay15() throws {
+        let input = """
+1163751742
+1381373672
+2136511328
+3694931569
+7463417111
+1319128137
+1359912421
+3125421639
+1293138521
+2311944581
+"""
+        let (a, b) = day15(input)
+        XCTAssertEqual(a, 40)
+        XCTAssertEqual(b, 315)
+    }
 }
