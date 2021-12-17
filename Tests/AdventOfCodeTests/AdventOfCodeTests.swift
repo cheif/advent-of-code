@@ -323,4 +323,11 @@ CN -> C
         XCTAssertEqual(day16("9C005AC2F8F0").1, 0)
         XCTAssertEqual(day16("9C0141080250320F1802104A08").1, 1)
     }
+
+    func testDay17() throws {
+        let input = "target area: x=20..30, y=-10..-5"
+        let (a, b) = day17(input)
+        XCTAssertEqual(a, 45)
+        XCTAssertEqual(b, 112)
+    }
 }

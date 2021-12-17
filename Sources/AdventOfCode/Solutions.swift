@@ -583,6 +583,45 @@ func day16(_ input: String) -> (Int, Int) {
     return (totalVersion(for: packet), computeValue(for: packet))
 }
 
+func day17(_ input: String) -> (Int, Int) {
+    let start = Point(x: 0, y: 0)
+    let split = input.trimmingCharacters(in: .newlines).split(separator: "=", maxSplits: 1)[1].components(separatedBy: ", y=").flatMap { $0.components(separatedBy: "..").map { Int($0)! }}
+    let targetArea = (split[0]...split[1], split[2]...split[3])
+
+    typealias State = (position: Point, velocity: Point)
+    func step(state: State) -> State {
+        (
+            position: Point(x: state.position.x + state.velocity.x, y: state.position.y + state.velocity.y),
+            velocity: .init(x: max(0, state.velocity.x - 1), y: state.velocity.y - 1)
+        )
+    }
+    func simulate(state: State, targetArea: (xRange: ClosedRange<Int>, yRange: ClosedRange<Int>)) -> [State]? {
+        if targetArea.xRange.contains(state.position.x) && targetArea.yRange.contains(state.position.y) {
+            // We're in the target-area
+            return [state]
+        } else if state.position.x > targetArea.xRange.max()! || state.position.y < targetArea.yRange.min()! {
+            // We're past the target, exit
+            return nil
+        } else if state.velocity.x <= 0 && !targetArea.xRange.contains(state.position.x) {
+            // We're not moving horizontally any more, exit
+            return nil
+        } else {
+            // need another iteration
+            return simulate(state: step(state: state), targetArea: targetArea).map { [state] + $0 }
+        }
+    }
+    func maxY(initial: State, targetArea: (xRange: ClosedRange<Int>, yRange: ClosedRange<Int>)) -> Int? {
+        simulate(state: initial, targetArea: targetArea).map { $0.map(\.position.y).max()! }
+    }
+
+    let xCandidates = 0...targetArea.0.max()!
+    let yCandidates = targetArea.1.min()!...300
+    let states: [State] = xCandidates.flatMap { xVel in yCandidates.map { yVel in (start, Point(x: xVel, y: yVel)) }}
+    let validStates = states.compactMap { state in simulate(state: state, targetArea: targetArea) }
+    let highestYPosition = validStates.map { steps in steps.map(\.position.y).max()! }.max()!
+    return (highestYPosition, validStates.count)
+}
+
 extension String {
     var isLowerCase: Bool {
         allSatisfy(\.isLowercase)
