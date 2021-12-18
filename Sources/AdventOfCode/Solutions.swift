@@ -1,3 +1,4 @@
+import Algorithms
 import Foundation
 
 func day1(_ input: String) -> (Int, Int) {
@@ -620,6 +621,148 @@ func day17(_ input: String) -> (Int, Int) {
     let validStates = states.compactMap { state in simulate(state: state, targetArea: targetArea) }
     let highestYPosition = validStates.map { steps in steps.map(\.position.y).max()! }.max()!
     return (highestYPosition, validStates.count)
+}
+
+func day18(_ input: String) -> (Int, Int) {
+    indirect enum Number: CustomStringConvertible, Equatable {
+        case regular(Int)
+        case pair(Number, Number)
+
+        var description: String {
+            switch self {
+            case .regular(let number):
+                return "\(number)"
+            case .pair(let lhs, let rhs):
+                return "[\(lhs),\(rhs)]"
+            }
+        }
+
+        init<S: StringProtocol>(_ string: S) {
+            if let regular = Int(String(string)) {
+                self = .regular(regular)
+            } else {
+                var bracketCount = 0
+                var lhs = ""
+                for char in string.dropFirst() {
+                    lhs.append(char)
+                    switch char {
+                    case "[":
+                        bracketCount += 1
+                    case "]":
+                        bracketCount -= 1
+                    default:
+                        break
+                    }
+                    if bracketCount == 0 {
+                        break
+                    }
+                }
+                let rhs = string.dropFirst(1 + lhs.count + 1).dropLast()
+                self = .pair(.init(lhs), .init(rhs))
+            }
+        }
+
+        func add(_ other: Self) -> Self {
+            .pair(self, other)
+        }
+
+        func addToLeftMost(number: Int?) -> Self {
+            switch self {
+            case .pair(let lhs, let rhs):
+                return .pair(lhs.addToLeftMost(number: number), rhs)
+            case .regular(let value):
+                return .regular(value + (number ?? 0))
+            }
+        }
+
+        func addToRightMost(number: Int?) -> Self {
+            switch self {
+            case .pair(let lhs, let rhs):
+                return .pair(lhs, rhs.addToRightMost(number: number))
+            case .regular(let value):
+                return .regular(value + (number ?? 0))
+            }
+        }
+
+        func _explode(depth: Int) -> (Int?, Self, Int?) {
+            switch self {
+            case .pair(.regular(let lhs), .regular(let rhs)):
+                if depth >= 4 {
+                    // This is the pair to explode!
+                    return (lhs, .regular(0), rhs)
+                }
+                return (nil, self, nil)
+            case .pair(let lhs, let rhs):
+                guard depth < 4 else {
+                    fatalError("Incorrect state!")
+                }
+                let left = lhs._explode(depth: depth + 1)
+                if left.1 != lhs {
+                    // Left was exploded, now we need to add it's number to right, and return left
+                    return (left.0, .pair(left.1, rhs.addToLeftMost(number: left.2)), nil)
+                }
+                let right = rhs._explode(depth: depth + 1)
+                if right.1 != rhs {
+                    // Right was exploded, now we need to add it's number to left, and return right
+                    return (nil, .pair(lhs.addToRightMost(number: right.0), right.1), right.2)
+                }
+                return (nil, .pair(left.1, right.1), nil)
+            case .regular:
+                return (nil, self, nil)
+            }
+        }
+
+        func explode(depth: Int = 0) -> Self {
+            _explode(depth: depth).1
+        }
+
+        func split() -> Self {
+            switch self {
+            case .pair(let lhs, let rhs):
+                let leftSplit = lhs.split()
+                if leftSplit != lhs {
+                    return .pair(leftSplit, rhs)
+                } else {
+                    return .pair(lhs, rhs.split())
+                }
+            case .regular(let number) where number >= 10:
+                return .pair(.regular(Int(floor(Float(number)/2))), .regular(Int(ceil(Float(number)/2))))
+            case .regular:
+                return self
+            }
+        }
+
+        func reduce() -> Self {
+            let exploded = explode()
+            if exploded != self {
+                return exploded.reduce()
+            }
+            let splitted = split()
+            if splitted != self {
+                return splitted.reduce()
+            }
+            return self
+        }
+
+        func magnitude() -> Int {
+            switch self {
+            case .pair(let lhs, let rhs):
+                return lhs.magnitude() * 3 + rhs.magnitude() * 2
+            case .regular(let number):
+                return number
+            }
+
+        }
+    }
+    let start: [Number] = input.split(separator: "\n").map(Number.init)
+    let result = start.dropFirst().reduce(start[0]) { acc, num in acc.add(num).reduce() }
+    let combinations = start.combinations(ofCount: 2)
+    let maxSum = combinations.map { numbers -> Int in
+        let lhs = numbers[0]
+        let rhs = numbers[1]
+        return max(lhs.add(rhs).reduce().magnitude(), rhs.add(lhs).reduce().magnitude())
+    }.max()!
+    return(result.magnitude(), maxSum)
 }
 
 extension String {
