@@ -855,6 +855,52 @@ func day19(_ input: String) -> (Int, Int) {
     return (Array(allProbes.uniqued()).count, maxDistance)
 }
 
+func day20(_ input: String) -> (Int, Int) {
+    let lines = input.trimmingCharacters(in: .newlines).components(separatedBy: "\n\n")
+    assert(lines.count == 2)
+    let algo = lines[0]
+    assert(algo.count == 512)
+    typealias Image = [[Character]]
+    let inputImage: Image = lines[1].components(separatedBy: "\n").map { $0.map { $0 }}
+
+    func neighbours(to point: Point, in image: Image, iteration: Int) -> [Character] {
+        let candidates = (-1...1).flatMap { y in
+            (-1...1).map { x in
+                Point(x: point.x + x, y: point.y + y)
+            }
+        }
+        let zeroFill = algo.first!
+        let fillValue = !iteration.isMultiple(of: 2) ? zeroFill : (zeroFill == "#" ? algo.last! : zeroFill)
+        return candidates.map { image.contains($0) ? image[$0] : fillValue }
+    }
+
+    func enhance(characters: [Character]) -> Character {
+        let value = Int(characters.map { $0 == "#" ? "1" : "0"}.joined(), radix: 2)!
+        let index = algo.index(algo.startIndex, offsetBy: value)
+        return algo[index]
+    }
+
+    func enhance(image: Image, iteration: Int) -> Image {
+        let expansion = 1
+        let coordinates = (-expansion..<image.count+expansion).map { y in (-expansion..<image[0].count+expansion).map { x in Point(x: x, y: y) }}
+        let new = coordinates.map { points in
+            points.map { neighbours(to: $0, in: image, iteration: iteration) }
+                .map { enhance(characters: $0) }
+        }
+        return new
+    }
+    func printImage(_ image: Image) {
+        print(image.map { $0.map { String($0) }.joined() }.joined(separator: "\n"))
+    }
+    func litCount(_ image: Image) -> Int { image.map { $0.filter { $0 == "#" }.count }.sum }
+    let doubleEnhanced = enhance(image: enhance(image: inputImage, iteration: 0), iteration: 1)
+    print(inputImage.count)
+    let fiftyTimesEnhanced = (0..<50).reduce(inputImage, enhance(image:iteration:))
+    print(fiftyTimesEnhanced.count)
+
+    return (litCount(doubleEnhanced), litCount(fiftyTimesEnhanced))
+}
+
 extension RandomAccessCollection {
     func lazyCompactFirstMap<T>(_ transform: (Element) -> T?) -> T? {
         for element in self {
