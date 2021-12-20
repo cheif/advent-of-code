@@ -765,6 +765,138 @@ func day18(_ input: String) -> (Int, Int) {
     return(result.magnitude(), maxSum)
 }
 
+func day19(_ input: String) -> (Int, Int) {
+    struct Scanner: Equatable {
+        let id: Int
+        typealias Probe = ThreeDPoint
+        let probes: [Probe]
+
+        init(_ string: String) {
+            let lines = string.components(separatedBy: "\n")
+            id = Int(lines[0].split(separator: " ")[2])!
+            probes = lines.dropFirst().map(Probe.init)
+        }
+
+        init(id: Int, probes: [Probe]) {
+            self.id = id
+            self.probes = probes
+        }
+
+        func overlapping(scanner other: Self, rotations: [(ThreeDPoint) -> ThreeDPoint]) -> (ThreeDPoint, (ThreeDPoint) -> ThreeDPoint)? {
+            for rotation in rotations {
+                let rotated = other.rotate(rotation)
+                let pairs = product(probes, rotated.probes)
+                let translations = pairs.map { $0 - $1 }
+                let best = translations.occurances().max(by: { lhs, rhs in lhs.value < rhs.value })!
+                if best.value >= 12 {
+                    // We found at least 12 overlapping probes, return all probes using this translation
+                    return (best.key, rotation)
+                }
+            }
+            return nil
+        }
+
+        func rotate(_ mapping: (ThreeDPoint) -> ThreeDPoint) -> Self {
+            .init(
+                id: id,
+                probes: probes.map(mapping)
+            )
+        }
+    }
+
+    // All mappings where we have (+/-)(x/y/z) as forward
+    let forwardMappings: [(ThreeDPoint) -> ThreeDPoint] = [
+        { .init(x: $0.x, y: $0.y, z: $0.z) },
+        { .init(x: -$0.y, y: $0.x, z: $0.z) },
+        { .init(x: -$0.x, y: -$0.y, z: $0.z) },
+        { .init(x: $0.y, y: -$0.x, z: $0.z) },
+        { .init(x: $0.z, y: $0.y, z: -$0.x) },
+        { .init(x: -$0.z, y: $0.y, z: $0.x) }
+    ]
+
+    // Now we just need to rotate all of the above around the x-axis four times to get all 24 possible rotations
+    func rotateAroundX(_ point: ThreeDPoint, numberOfQuarters: Int) -> ThreeDPoint {
+        switch numberOfQuarters {
+        case 0:
+            return point
+        case 1:
+            return .init(x: point.x, y: point.z, z: -point.y)
+        case 2:
+            return .init(x: point.x, y: -point.y, z: -point.z)
+        case 3:
+            return .init(x: point.x, y: -point.z, z: point.y)
+        default:
+            fatalError()
+        }
+    }
+    let allRotations: [(ThreeDPoint) -> ThreeDPoint] = forwardMappings.flatMap { mapping in (0...3).map { quarters in { rotateAroundX(mapping($0), numberOfQuarters: quarters) }}}
+
+    let scanners = input.trimmingCharacters(in: .newlines).components(separatedBy: "\n\n").map(Scanner.init)
+    var candidates = Array(scanners.dropFirst())
+    typealias TranslatedScanner = (scanner: Scanner, translation: ThreeDPoint, rotation: (ThreeDPoint) -> ThreeDPoint)
+    var completed: [TranslatedScanner] = [(scanner: scanners[0], translation: ThreeDPoint(x: 0, y: 0, z: 0), rotation: { $0 })]
+    var toCheck: [TranslatedScanner] = completed
+    while !toCheck.isEmpty {
+        let checking = toCheck.popLast()!
+        let matches: [TranslatedScanner] = candidates.compactMap { scanner in
+            let inner: TranslatedScanner? = checking.scanner.overlapping(scanner: scanner, rotations: allRotations).map { translation, rotation in (scanner, translation, rotation) }
+            return inner.map { scanner, translation, rotation in (scanner, checking.rotation(translation) + checking.translation, { checking.rotation(rotation($0)) })}
+        }
+        completed.append(contentsOf: matches)
+        toCheck.append(contentsOf: matches)
+        candidates.removeAll(where: { matches.map(\.scanner.id).contains($0.id) })
+        print("Found: \(matches.count)")
+        print("To check: \(candidates.count)")
+    }
+    let allProbes = completed.flatMap { scanner, translation, rotation in scanner.probes.map(rotation).map { $0 + translation }}
+    print(completed.map(\.translation))
+    print(completed.combinations(ofCount: 2).count)
+    let maxDistance = completed.map(\.translation).combinations(ofCount: 2).map { points in points[0].distance(to: points[1]) }.max()!
+    return (Array(allProbes.uniqued()).count, maxDistance)
+}
+
+extension RandomAccessCollection {
+    func lazyCompactFirstMap<T>(_ transform: (Element) -> T?) -> T? {
+        for element in self {
+            if let result = transform(element) {
+                return result
+            }
+        }
+        return nil
+    }
+}
+
+struct ThreeDPoint: Hashable, CustomStringConvertible {
+    let x: Int
+    let y: Int
+    let z: Int
+
+    init(_ string: String) {
+        let split = string.split(separator: ",").map { Int($0)! }
+        self.init(x: split[0], y: split[1], z: split[2])
+    }
+
+    init(x: Int, y: Int, z: Int) {
+        self.x = x
+        self.y = y
+        self.z = z
+    }
+
+    static func + (lhs: Self, rhs: Self) -> Self {
+        .init(x: lhs.x + rhs.x, y: lhs.y + rhs.y, z: lhs.z + rhs.z)
+    }
+
+    static func - (lhs: Self, rhs: Self) -> Self {
+        .init(x: lhs.x - rhs.x, y: lhs.y - rhs.y, z: lhs.z - rhs.z)
+    }
+
+    func distance(to other: Self) -> Int {
+        abs(other.x - x) + abs(other.y - y) + abs(other.z - z)
+    }
+
+    var description: String { "(\(x),\(y),\(z))" }
+}
+
 extension String {
     var isLowerCase: Bool {
         allSatisfy(\.isLowercase)
