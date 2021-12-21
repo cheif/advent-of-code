@@ -901,6 +901,151 @@ func day20(_ input: String) -> (Int, Int) {
     return (litCount(doubleEnhanced), litCount(fiftyTimesEnhanced))
 }
 
+func day21(_ input: String) -> (Int, Int) {
+    struct Player: Hashable {
+        var position: Int
+        var score: Int = 0
+
+        init(_ string: String) {
+            position = Int(string.components(separatedBy: ": ")[1])!
+        }
+
+        init(position: Int, score: Int) {
+            self.position = position
+            self.score = score
+        }
+
+        mutating func moved(_ steps: Int) {
+            position = ((position + steps - 1) % 10) + 1
+            score += position
+        }
+
+        func move(_ steps: Int) -> Self {
+            let newPosition = ((position + steps - 1) % 10) + 1
+            return .init(
+                position: newPosition,
+                score: score + newPosition
+            )
+        }
+    }
+
+    struct DeterministicDie {
+        var state = 0
+        var rolls = 0
+        mutating func roll() -> Int {
+            let roll = state + 1
+            state = (state + 1 % 100)
+            rolls += 1
+            return roll
+        }
+
+        mutating func roll3x() -> Int {
+            (0..<3).map { _ in roll() }.sum
+        }
+    }
+
+    struct DiracDie {
+        func roll() -> [Int] {
+            return [1, 2, 3]
+        }
+
+        func roll3x() -> [[Int]] {
+            Array(product(roll(), product(roll(), roll())).map { [$0, $1.0, $1.1] })
+        }
+
+        lazy var combinations: [Int: Int] = roll3x().map(\.sum).occurances()
+
+        // Play, and return the number of universes the users win in
+        mutating func play(_ players: [Player]) -> (Int, Int) {
+            let initialState = State(player1: players[0], player2: players[1], player1ToPlay: true)
+            var statesToCheck: Set<State> = .init(arrayLiteral: initialState)
+            let target = 21
+            var cache: [State: (Int, Int)] = [:]
+            while cache[initialState] == nil {
+                if cache.count.isMultiple(of: 100) || statesToCheck.count.isMultiple(of: 100) {
+                    print("cache: \(cache.count)")
+                    print("toCheck: \(statesToCheck.count)")
+                }
+                let state = statesToCheck.popFirst() ?? initialState
+                if cache[state] != nil {
+                    continue
+                } else if let score = state.score(for: target) {
+                    cache[state] = score
+                } else {
+                    let subStates = expandState(state: state)
+                    let unknownStates = subStates.map(\.state).filter { cache[$0] == nil }
+                    if !unknownStates.isEmpty {
+                        statesToCheck.formUnion(unknownStates)
+                    } else {
+                        // All substates known, now we can calculate the value for this state by adding them up together
+                        let knownStates = subStates.compactMap { state, occurances in cache[state].map { ($0 * occurances, $1 * occurances) }}
+                        cache[state] = knownStates.reduce((0, 0)) { acc, state in (acc.0 + state.0, acc.1 + state.1) }
+                    }
+                }
+            }
+            return cache[initialState]!
+        }
+
+        struct State: Hashable {
+            let player1: Player
+            let player2: Player
+            let player1ToPlay: Bool
+
+            func score(for target: Int) -> (Int, Int)? {
+                if player1.score >= target {
+                    return (1, 0)
+                } else if player2.score >= target {
+                    return (0, 1)
+                } else {
+                    return nil
+                }
+            }
+        }
+
+        private var expansionCache: [State: [(State, Int)]] = [:]
+        mutating func expandState(state: State) -> [(state: State, occurances: Int)] {
+            if let result = expansionCache[state] {
+                return result
+            }
+            let result = combinations.map { steps, occurances -> (State, Int) in
+                let newState = state.player1ToPlay ?
+                State(
+                    player1: state.player1.move(steps),
+                    player2: state.player2,
+                    player1ToPlay: false
+                ) :
+                State(
+                    player1: state.player1,
+                    player2: state.player2.move(steps),
+                    player1ToPlay: true
+                )
+                return (newState, occurances)
+            }
+            expansionCache[state] = result
+            return result
+        }
+    }
+
+    let players = input.trimmingCharacters(in: .newlines).components(separatedBy: "\n").map(Player.init)
+    var player1 = players[0]
+    var player2 = players[1]
+    var die = DeterministicDie()
+
+    while player1.score < 1000 && player2.score < 1000 {
+        player1.moved(die.roll3x())
+        if player1.score >= 1000 {
+            break
+        }
+        player2.moved(die.roll3x())
+    }
+    let losingScore = min(player1.score, player2.score)
+
+    var diracDie = DiracDie()
+    let diracScores = diracDie.play(players)
+
+    return (losingScore * die.rolls, max(diracScores.0, diracScores.1))
+}
+
 extension RandomAccessCollection {
     func lazyCompactFirstMap<T>(_ transform: (Element) -> T?) -> T? {
         for element in self {

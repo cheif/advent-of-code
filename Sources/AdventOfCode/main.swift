@@ -25,6 +25,7 @@ private func getSolution(for day: Int) -> (String) -> Any {
     case 18: return day18
     case 19: return day19
     case 20: return day20
+    case 21: return day21
     default: fatalError("Not mapped yet")
     }
 }

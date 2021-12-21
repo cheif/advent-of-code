@@ -520,4 +520,14 @@ CN -> C
         XCTAssertEqual(a, 35)
         XCTAssertEqual(b, 3351)
     }
+
+    func testDay21() {
+        let input = """
+Player 1 starting position: 4
+Player 2 starting position: 8
+"""
+        let (a, b) = day21(input)
+        XCTAssertEqual(a, 739785)
+        XCTAssertEqual(b, 444356092776315)
+    }
 }
