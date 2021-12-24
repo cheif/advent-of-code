@@ -530,4 +530,17 @@ Player 2 starting position: 8
         XCTAssertEqual(a, 739785)
         XCTAssertEqual(b, 444356092776315)
     }
+
+    func testDay23() {
+        let input = """
+#############
+#...........#
+###B#C#B#D###
+  #A#D#C#A#
+  #########
+"""
+        let (a, b) = day23(input)
+        XCTAssertEqual(a, 12521)
+        XCTAssertEqual(b, 44169)
+    }
 }

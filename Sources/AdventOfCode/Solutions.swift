@@ -1046,6 +1046,239 @@ func day21(_ input: String) -> (Int, Int) {
     return (losingScore * die.rolls, max(diracScores.0, diracScores.1))
 }
 
+func day23(_ input: String) -> (Int, Int) {
+    func moveCost(for ampipod: Character) -> Int {
+        switch ampipod {
+        case "A": return 1
+        case "B": return 10
+        case "C": return 100
+        case "D": return 1000
+        default: fatalError()
+        }
+    }
+
+    func getRoom(for ampipod: Character) -> Int {
+        switch ampipod {
+        case "A": return 0
+        case "B": return 1
+        case "C": return 2
+        case "D": return 3
+        default: fatalError()
+        }
+    }
+
+    struct State: CustomStringConvertible, Hashable {
+        let hallway: [Character]
+        typealias Room = [Character]
+        let rooms: [Room]
+
+        static func create(from string: String) -> Self {
+            var rooms: [Room] = (0..<4).map { _ in [] }
+            for line in string.components(separatedBy: "\n").dropFirst(2).dropLast() {
+                let chars = line.trimmingCharacters(in: .whitespacesAndNewlines).filter { $0 != "#" }
+                for (room, ampipod) in chars.enumerated() {
+                    rooms[room].append(ampipod)
+                }
+            }
+            
+            return Self(
+                hallway: [".", ".", ".", ".", ".", ".", ".", ".", ".", ".", "."],
+                rooms: rooms
+            )
+        }
+
+        func expand() -> Self {
+            let enumerated: EnumeratedSequence<[Room]> = rooms.enumerated()
+            return Self(
+                hallway: hallway,
+                rooms: enumerated.map { offset, room in
+                    let fill: Room = {
+                        switch offset {
+                        case 0: return ["D", "D"]
+                        case 1: return ["C", "B"]
+                        case 2: return ["B", "A"]
+                        case 3: return ["A", "C"]
+                        default: fatalError()
+                        }
+                    }()
+                    return [room[0]] + fill + [room[1]]
+                }
+            )
+        }
+
+        var description: String {
+            """
+#############
+#\(String(hallway))#
+###\(rooms.map { $0.count == 2 ? String($0.first!) : "." }.joined(separator: "#"))###
+  #\(rooms.map { String($0.last ?? ".") }.joined(separator: "#"))#
+  #########
+"""
+
+        }
+
+        var roomSize: Int { rooms.map(\.count).max()! }
+
+        func validMoves() -> [(state: Self, cost: Int)] {
+            var moves: [(Self, Int)] = []
+            let sections = hallway.enumerated().split(whereSeparator: { $0.element != "." }).map { $0.map(\.offset) }
+
+            let enumerated: EnumeratedSequence<[Room]> = rooms.enumerated()
+            let entrances = [2, 4, 6, 8]
+            for (roomOffset, room) in enumerated {
+                let entrance = entrances[roomOffset]
+                let outside = sections.first(where: { $0.contains(entrance) }) ?? []
+                let validPositions = outside.filter { !entrances.contains($0) }
+                if let ampipod = room.first {
+                    if room.allSatisfy({ $0 == ampipod }) && getRoom(for: ampipod) == roomOffset {
+                        // Already in the correct room
+                        continue
+                    }
+                    moves.append(contentsOf: validPositions.map { offset -> (Self, Int) in
+                        let hallway = hallway.enumerated().map { $0.offset == offset ? ampipod : $0.element }
+                        let distance = abs(offset - entrance) + 1 + (roomSize - room.count)
+                        let cost = distance * moveCost(for: ampipod)
+                        return (
+                            Self(
+                                hallway: hallway,
+                                rooms: rooms.enumerated().map { $0.offset == roomOffset ? Array($0.element.dropFirst()) : $0.element }
+                            ),
+                            cost
+                        )
+                    })
+                }
+            }
+            for (offset, ampipod) in hallway.enumerated().filter({ $0.element != "." }) {
+                let room = getRoom(for: ampipod)
+                let entrance = entrances[room]
+                guard let section = sections.first(where: { $0.contains(entrance) }),
+                      section.contains(offset - 1) || section.contains(offset + 1) else {
+                          continue
+                      }
+                if rooms[room].count < roomSize && rooms[room].allSatisfy({ $0 == ampipod }) {
+                    let distance = abs(offset - entrance) + (roomSize - rooms[room].count)
+                    let cost = distance * moveCost(for: ampipod)
+                    moves.append((
+                        State(
+                            hallway: hallway.enumerated().map { $0.offset == offset ? "." : $0.element },
+                            rooms: rooms.enumerated().map { $0.offset == room ? [ampipod] + $0.element : $0.element }
+                        ),
+                        cost
+                    ))
+                }
+            }
+            return moves
+        }
+
+        static func finished(roomSize: Int) -> Self {
+            Self(hallway: (0..<11).map { _ in "." }, rooms: (0..<4).map { room in
+                let ampipod: Character = {
+                    switch room {
+                    case 0: return "A"
+                    case 1: return "B"
+                    case 2: return "C"
+                    case 3: return "D"
+                    default: fatalError()
+                    }
+                }()
+                return (0..<roomSize).map { _ in ampipod }
+            })
+        }
+    }
+    indirect enum Move: Hashable {
+        case move(parent: Move?, state: State, cost: Int)
+
+        var parent: Move? {
+            switch self {
+            case .move(let parent, _, _):
+                return parent
+            }
+        }
+
+        var state: State {
+            switch self {
+            case .move(_, let state, _):
+                return state
+            }
+        }
+
+        var cost: Int {
+            switch self {
+            case .move(_, _, let cost):
+                return cost
+            }
+        }
+
+        func printSequence() {
+            var sequence: [Self] = [self]
+            var parent = self.parent
+            while parent != nil {
+                sequence.insert(parent!, at: 0)
+                parent = parent!.parent
+            }
+            print("\n\n")
+            for move in sequence {
+                print(move.state)
+                print("Cost: \(move.cost - (move.parent?.cost ?? 0))\n")
+            }
+            print("\n\n")
+        }
+    }
+
+    func findBestMove(initialState: State, finishedState: State) -> Move? {
+        var movesToTest: [Move] = [.move(parent: nil, state: initialState, cost: 0)]
+        var tested: [State: Int] = [:]
+        var finished: [Move] = []
+        var best: Move?
+        while !movesToTest.isEmpty {
+            let move = movesToTest.removeFirst()
+            if move.state == finishedState {
+                best = [best, move].compactMap { $0 }.min(by: { $0.cost < $1.cost })
+                finished.append(move)
+                movesToTest.removeAll(where: { $0.cost > (best?.cost ?? .max) })
+            }
+            if let cheapest = tested[move.state], cheapest <= move.cost {
+                tested[move.state] = min(cheapest, move.cost)
+                continue
+            } else {
+                tested[move.state] = move.cost
+            }
+            if !(move.state == finishedState) {
+                let newMoves = move.state.validMoves().map { Move.move(parent: move, state: $0.state, cost: $0.cost + move.cost) }.filter { $0.cost <= (best?.cost ?? .max) }
+                movesToTest.append(contentsOf: newMoves)
+            }
+
+            if movesToTest.count.isMultiple(of: 100) {
+                movesToTest.sort(by: { $0.cost < $1.cost })
+            }
+
+             if movesToTest.count.isMultiple(of: 100) {
+                 print("To test: \(movesToTest.count)")
+                 print("Tested: \(tested.count)")
+                 print("Finished: \(finished.count)")
+             }
+        }
+        return best
+    }
+    let initialState = State.create(from: input)
+//    let manualSteps = [16, 2, 5, 2, 5, 2, 3, 0, 0, 0, 0, 0]
+//    let manual = manualSteps.reduce(movesToTest[0]) { acc, offset in
+//        let moves = acc.state.validMoves()
+//        print(Array(moves.enumerated()))
+//        let move = moves[offset]
+//        return .move(parent: acc, state: move.state, cost: acc.cost + move.cost)
+//    }
+//    print(manual.state)
+//    assert(manual.cost == 12521)
+//    assert(manual.state.isFinished())
+//    print(initialState.validMoves())
+//    print(initialState.expand())
+//    return (0, 0)
+    return (
+        findBestMove(initialState: initialState, finishedState: .finished(roomSize: 2))!.cost,
+        findBestMove(initialState: initialState.expand(), finishedState: .finished(roomSize: 4))!.cost
+    )
+}
 extension RandomAccessCollection {
     func lazyCompactFirstMap<T>(_ transform: (Element) -> T?) -> T? {
         for element in self {
