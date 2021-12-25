@@ -1279,6 +1279,50 @@ func day23(_ input: String) -> (Int, Int) {
         findBestMove(initialState: initialState.expand(), finishedState: .finished(roomSize: 4))!.cost
     )
 }
+
+func day25(_ input: String) -> (Int, Int) {
+    typealias Cucumber = Character
+    typealias State = [[Cucumber]]
+    let cucumbers: State = input.split(separator: "\n").map { $0.map { $0 }}
+
+    func step(_ state: State) -> State {
+        var new = state
+        let eastbound = state.enumerated().filter { $0.value == ">" }
+            .map(\.point)
+            .map { (source: $0, target: Point(x: ($0.x + 1) % state[0].count, y: $0.y)) }
+            .filter { state[$0.target] == "." }
+        for move in eastbound {
+            new[move.source] = "."
+            new[move.target] = ">"
+        }
+        let southbound = new.enumerated().filter { $0.value == "v" }
+            .map(\.point)
+            .map { (source: $0, target: Point(x: $0.x, y: ($0.y + 1) % new.count)) }
+            .filter { new[$0.target] == "." }
+        for move in southbound {
+            new[move.source] = "."
+            new[move.target] = "v"
+        }
+        return new
+    }
+    func printState(_ steps: Int, _ state: State) {
+        print("\nAfter \(steps) steps:")
+        print(state.map { String($0) }.joined(separator: "\n"))
+    }
+    var steps = 0
+    var changed = true
+    var state = cucumbers
+    while changed {
+//        printState(steps, state)
+        let next = step(state)
+        changed = next != state
+        steps += 1
+        state = next
+    }
+
+    return (steps, 0)
+}
+
 extension RandomAccessCollection {
     func lazyCompactFirstMap<T>(_ transform: (Element) -> T?) -> T? {
         for element in self {
