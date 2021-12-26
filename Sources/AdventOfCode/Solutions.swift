@@ -1280,6 +1280,339 @@ func day23(_ input: String) -> (Int, Int) {
     )
 }
 
+func day24(_ input: String) -> (Int, Int) {
+    struct ALU {
+        var w: Int = 0
+        var x: Int = 0
+        var y: Int = 0
+        var z: Int = 0
+
+        var input: [Int] = []
+
+        mutating func reset() {
+            w = 0
+            x = 0
+            y = 0
+            z = 0
+            input = []
+        }
+
+        mutating func execute(line: String) {
+            let instruction = line.components(separatedBy: " ")
+            switch (instruction[0], instruction[1], instruction.count == 3 ? instruction[2] : nil) {
+            case ("inp", let a, _):
+                set(a, to: input.removeFirst())
+            case ("add", let a, let b):
+                set(a, to: get(a)! + getOrValue(b!))
+            case ("mul", let a, let b):
+                set(a, to: get(a)! * getOrValue(b!))
+            case ("div", let a, let b):
+                set(a, to: get(a)! / getOrValue(b!))
+            case ("mod", let a, let b):
+                set(a, to: get(a)! % getOrValue(b!))
+            case ("eql", let a, let b):
+                set(a, to: getOrValue(a) == getOrValue(b!) ? 1 : 0)
+            default:
+                fatalError()
+            }
+        }
+
+        mutating private func set(_ register: String, to value: Int) {
+            switch register {
+            case "w": w = value
+            case "x": x = value
+            case "y": y = value
+            case "z": z = value
+            default: fatalError()
+            }
+        }
+
+        private func getOrValue(_ register: String) -> Int {
+            get(register) ?? Int(register)!
+        }
+
+        private func get(_ register: String) -> Int? {
+            switch register {
+            case "w": return w
+            case "x": return x
+            case "y": return y
+            case "z": return z
+            default: return nil
+            }
+        }
+    }
+
+    indirect enum Instruction: CustomStringConvertible, Hashable {
+        case number(Int)
+        case inp(Int)
+        case add(Instruction, Instruction)
+        case mul(Instruction, Instruction)
+        case div(Instruction, Instruction)
+        case mod(Instruction, Instruction)
+        case eql(Instruction, Instruction)
+
+        var description: String {
+            switch self {
+            case .number(let n):
+                return "\(n)"
+            case .inp(let offset):
+                return "read \(offset)"
+            case .add(let lhs, let rhs):
+                return "(\(lhs) + \(rhs))"
+            case .mul(let lhs, let rhs):
+                return "(\(lhs) * \(rhs))"
+            case .div(let lhs, let rhs):
+                return "(\(lhs) / \(rhs))"
+            case .mod(let lhs, let rhs):
+                return "(\(lhs) % \(rhs))"
+            case .eql(let lhs, let rhs):
+                return "(\(lhs) == \(rhs))"
+            }
+        }
+
+        func reduce() -> Instruction {
+            switch self {
+            case .div(.number(0), _), .mul(.number(0), _), .mul(_, .number(0)), .mod(.number(0), _):
+                return .number(0)
+            case .add(.number(let lhs), .number(let rhs)):
+                return .number(lhs + rhs)
+            case .add(.number(0), let other), .add(let other, .number(0)), .div(let other, .number(1)), .mul(let other, .number(1)):
+                return other
+            case .eql(let lhs, let rhs) where lhs.minimumValue > rhs.maximumValue:
+                return .number(0)
+            case .eql(let lhs, let rhs) where lhs.maximumValue < rhs.minimumValue:
+                return .number(0)
+            case .eql(.number(let lhs), .number(let rhs)):
+                return .number(lhs == rhs ? 1 : 0)
+            case .mod(.add(.mul(_, let mul), let other), let moderand) where mul == moderand:
+                return .mod(other, moderand).reduce()
+            case .mod(let other, .number(let num)) where other.maximumValue < num:
+                return other
+            case .add(.mul(let lhs, let mul), .mul(let rhs, let mul2)) where mul == mul2:
+                return .mul(.add(lhs, rhs), mul)
+            case .add(.add(let lhs, .number(let num1)), .number(let num2)):
+                return .add(lhs, .number(num1 + num2))
+            case .div(.add(.mul(let lhs, .number(let mul)), let rhs), .number(let divisor)) where mul == divisor:
+                return .add(lhs, .div(rhs, .number(divisor)))
+            default:
+                return self
+            }
+        }
+
+        var minimumValue: Int {
+            switch self {
+            case .number(let num):
+                return num
+            case .add(let lhs, let rhs):
+                return lhs.minimumValue + rhs.minimumValue
+            case .mul(let lhs, let rhs):
+                return lhs.minimumValue * rhs.minimumValue
+            case .div(let lhs, let rhs):
+                return Int(floor(Float(lhs.minimumValue) / Float(rhs.maximumValue)))
+            case .mod(let lhs, let rhs):
+                return lhs.minimumValue % rhs.minimumValue
+            case .inp:
+                return 1
+            case .eql:
+                return 0
+            }
+        }
+
+        var maximumValue: Int {
+            switch self {
+            case .number(let num):
+                return num
+            case .add(let lhs, let rhs):
+                return lhs.maximumValue + rhs.maximumValue
+            case .mul(let lhs, let rhs):
+                return lhs.maximumValue * rhs.maximumValue
+            case .div(let lhs, let rhs):
+                return Int(floor(Float(lhs.maximumValue) / Float(rhs.minimumValue)))
+            case .mod(_, let moderand):
+                return moderand.maximumValue - 1
+            case .inp:
+                return 9
+            case .eql:
+                return 1
+            }
+        }
+
+        func evaluate(with input: [Int]) -> Int {
+            switch self {
+            case .number(let num):
+                return num
+            case .inp(let offset):
+                return input[offset]
+            case .add(let lhs, let rhs):
+                return lhs.evaluate(with: input) + rhs.evaluate(with: input)
+            case .mul(let lhs, let rhs):
+                return lhs.evaluate(with: input) * rhs.evaluate(with: input)
+            case .div(let lhs, let rhs):
+                return lhs.evaluate(with: input) / rhs.evaluate(with: input)
+            case .mod(let lhs, let rhs):
+                return lhs.evaluate(with: input) % rhs.evaluate(with: input)
+            case .eql(let lhs, let rhs):
+                return lhs.evaluate(with: input) == rhs.evaluate(with: input) ? 1 : 0
+            }
+        }
+    }
+
+    struct ALU2 {
+        var w = Instruction.number(0)
+        var x = Instruction.number(0)
+        var y = Instruction.number(0)
+        var z = Instruction.number(0)
+
+        init(input: String) {
+            input.trimmingCharacters(in: .newlines).components(separatedBy: "\n").forEach { line in parse(line: line) }
+        }
+
+        var inputCounter = 0
+
+        mutating private func parse(line: String) {
+            let instruction = line.components(separatedBy: " ")
+            switch (instruction[0], instruction[1], instruction.count == 3 ? instruction[2] : nil) {
+            case ("inp", let a, _):
+                set(a, to: .inp(inputCounter))
+                inputCounter += 1
+            case ("add", let a, let b):
+                set(a, to: .add(get(a)!, getOrValue(b!)))
+            case ("mul", let a, let b):
+                set(a, to: .mul(get(a)!, getOrValue(b!)))
+            case ("div", let a, let b):
+                set(a, to: .div(get(a)!, getOrValue(b!)))
+            case ("mod", let a, let b):
+                set(a, to: .mod(get(a)!, getOrValue(b!)))
+            case ("eql", let a, let b):
+                set(a, to: .eql(getOrValue(a), getOrValue(b!)))
+            default:
+                fatalError()
+            }
+        }
+
+        mutating private func set(_ register: String, to value: Instruction) {
+            switch register {
+            case "w": w = value.reduce()
+            case "x": x = value.reduce()
+            case "y": y = value.reduce()
+            case "z": z = value.reduce()
+            default: fatalError()
+            }
+        }
+
+        private func getOrValue(_ register: String) -> Instruction {
+            get(register) ?? .number(Int(register)!)
+        }
+
+        private func get(_ register: String) -> Instruction? {
+            switch register {
+            case "w": return w
+            case "x": return x
+            case "y": return y
+            case "z": return z
+            default: return nil
+            }
+        }
+    }
+
+    let alu = ALU2(input: input)
+
+    typealias Input = [Int]
+    func findZeroInputs() -> [Input] {
+        var results: [Input: Int] = [:]
+        var toTest = Set([Array(0..<14).map { _ in 1 }])
+        let values = (1...9)
+        var best: Int = .max
+        var tolerance = 10
+        while best > 0 {
+            let startingResults = results.count
+            let startingBest = best
+            for offset in (0..<14) {
+                let inputsToTest = values.flatMap { number in toTest.map { input in input.enumerated().map { $0.offset == offset ? number : $0.element }}}
+                    .filter { results[$0] == nil }
+                guard !inputsToTest.isEmpty else {
+                    continue
+                }
+                let runResults = inputsToTest.map { ($0, alu.z.evaluate(with: $0)) }
+                results.merge(runResults, uniquingKeysWith: {
+                    assert($0 == $1)
+                    return $0
+                })
+                best = min(runResults.first!.1, best)
+                let bestInputs = runResults.filter { $0.1 < best * tolerance }.sorted(by: { $0.1 < $1.1 }).prefix(100)
+                toTest = Set(bestInputs.map(\.0))
+            }
+            if startingBest > best {
+                tolerance = max(1, tolerance / 10)
+            } else if startingResults == results.count {
+                tolerance *= 10
+                toTest = Set(results.filter { $0.value < best * tolerance }.sorted(by: { $0.value < $1.value }).map(\.key).prefix(100))
+            }
+        }
+        return results.filter { $0.value == 0 }.map(\.key)
+    }
+
+    func findBetter(_ input: Input, sortBest: (Input, Input) -> Bool, changeInput: (Input, _ offset: Int) -> [Input]) -> Input {
+        var best = input
+        var parametersToChange = 1
+        let allOffsets = (0..<14)
+        while parametersToChange < 4 {
+            let currentBest = best
+            let changeableOffsets = allOffsets.filter { changeInput(best, $0).count > 1 }
+            for offsets in changeableOffsets.combinations(ofCount: parametersToChange) {
+                let inputsToTest = offsets.reduce([best]) { acc, offset -> [Input] in
+                    acc.flatMap { changeInput($0, offset) }
+                }
+
+                let runResults = inputsToTest.map { ($0, alu.z.evaluate(with: $0)) }//.sorted(by: { $0.1 < $1.1 })
+                let zeroResults = runResults.filter { $0.1 == 0 }.map(\.0)
+                best = (zeroResults + [best]).max(by: sortBest)!
+            }
+            if currentBest == best {
+                parametersToChange += 1
+            } else {
+                parametersToChange = 1
+            }
+        }
+        return best
+    }
+
+    func val(_ input: Input) -> Int {
+        Int(input.map { String($0) }.joined(separator: ""))!
+    }
+
+    func increase(_ input: Input, offset: Int) -> [Input] {
+        let values = input[offset]...9
+        return values.map { number in input.enumerated().map { $0.offset == offset ? number : $0.element }}
+    }
+
+    func decrease(_ input: Input, offset: Int) -> [Input] {
+        let values = 1...input[offset]
+        return values.map { number in input.enumerated().map { $0.offset == offset ? number : $0.element }}
+    }
+
+    func validate(_ test: Input) {
+        assert(alu.z.evaluate(with: test) == 0)
+        var computor = ALU()
+        computor.input = test
+        for line in input.trimmingCharacters(in: .newlines).components(separatedBy: "\n") {
+            computor.execute(line: line)
+        }
+        assert(computor.z == 0)
+    }
+
+    // These are currently pre-computed to save time, uncomment this to re-run the computation
+//    let zeroInputs = findZeroInputs().sorted(by: { val($0) < val($1) })
+    let zeroInputs = ["11972992552161", "11972992563161", "11972992574161", "11972992585161", "11972992596161", "61972992563166"].map { $0.map { Int(String($0))! }}
+
+    let largestModel = findBetter(zeroInputs.last!, sortBest: { val($0) < val($1) }, changeInput: increase)
+    validate(largestModel)
+    let smallestModel = findBetter(zeroInputs.first!, sortBest: { val($0) > val($1) }, changeInput: decrease)
+    validate(smallestModel)
+
+    return (val(largestModel), val(smallestModel))
+}
+
 func day25(_ input: String) -> (Int, Int) {
     typealias Cucumber = Character
     typealias State = [[Cucumber]]
