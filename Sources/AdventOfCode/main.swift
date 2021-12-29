@@ -27,6 +27,7 @@ private func getSolution(for day: Int) -> (String) -> Any {
     case 19: return day19
     case 20: return day20
     case 21: return day21
+    case 22: return day22
     case 23: return day23
     case 24: return day24
     case 25: return day25

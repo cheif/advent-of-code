@@ -1046,6 +1046,27 @@ func day21(_ input: String) -> (Int, Int) {
     return (losingScore * die.rolls, max(diracScores.0, diracScores.1))
 }
 
+func day22(_ input: String) -> (Int, Int) {
+    typealias Instruction = (turnOn: Bool, cuboid: Cuboid)
+    let instructions: [Instruction] = input.split(separator: "\n").map { string in
+        let split = string.split(separator: " ")
+        return (
+            split[0] == "on",
+            Cuboid(split[1])
+        )
+    }
+
+    let finalCube = instructions.reduce(Cuboidish()) { cuboidish, instruction in
+        if instruction.turnOn {
+            return cuboidish.add(instruction.cuboid)
+        } else {
+            return cuboidish.subtract(instruction.cuboid)
+        }
+    }
+    let innerCube: Cuboid = ThreeDPoint(x: -50, y: -50, z: -50)...ThreeDPoint(x: 50, y: 50, z: 50)
+    return (finalCube.size(in: innerCube), finalCube.size())
+}
+
 func day23(_ input: String) -> (Int, Int) {
     func moveCost(for ampipod: Character) -> Int {
         switch ampipod {
@@ -1656,6 +1677,79 @@ func day25(_ input: String) -> (Int, Int) {
     return (steps, 0)
 }
 
+typealias Cuboid = ClosedRange<ThreeDPoint>
+
+extension Cuboid {
+    init<S: StringProtocol>(_ string: S) {
+        let parts = string.split(separator: "=").dropFirst().map { $0.split(separator: ",")[0].components(separatedBy: "..").map { Int($0)! }}
+        let start = parts.compactMap(\.first)
+        let end = parts.compactMap(\.last)
+        self = ThreeDPoint(x: start[0], y: start[1], z: start[2])...ThreeDPoint(x: end[0], y: end[1], z: end[2])
+    }
+
+    func size() -> Int {
+        let diff = upperBound - lowerBound
+        return (diff.x + 1) * (diff.y + 1) * (diff.z + 1)
+    }
+
+    func overlap(with other: Cuboid) -> Self? {
+        if lowerBound.x <= other.lowerBound.x && upperBound.x >= other.upperBound.x && lowerBound.y <= other.lowerBound.y && upperBound.y >= other.upperBound.y && lowerBound.z <= other.lowerBound.z && upperBound.z >= other.upperBound.z {
+            return other
+        } else if lowerBound.x >= other.lowerBound.x && upperBound.x <= other.upperBound.x && lowerBound.y >= other.lowerBound.y && upperBound.y <= other.upperBound.y && lowerBound.z >= other.lowerBound.z && upperBound.z <= other.upperBound.z {
+            return self
+        } else if lowerBound.x > other.upperBound.x || lowerBound.y > other.upperBound.y || lowerBound.z > other.upperBound.z || upperBound.x < other.lowerBound.x || upperBound.y < other.lowerBound.y || upperBound.z < other.lowerBound.z {
+            return nil
+        } else {
+            return .init(
+                from: .init(x: Swift.max(lowerBound.x, other.lowerBound.x), y: Swift.max(lowerBound.y, other.lowerBound.y), z: Swift.max(lowerBound.z, other.lowerBound.z)),
+                to: .init(x: Swift.min(upperBound.x, other.upperBound.x), y: Swift.min(upperBound.y, other.upperBound.y), z: Swift.min(upperBound.z, other.upperBound.z))
+            )
+        }
+    }
+
+    init?(from: ThreeDPoint, to: ThreeDPoint) {
+        guard from.x <= to.x && from.y <= to.y && from.z <= to.z else {
+            return nil
+        }
+        self = from...to
+    }
+}
+
+struct Cuboidish {
+    let cubes: [Cuboid]
+    let minusCubes: [Cuboid]
+    init(cubes: [Cuboid], minusCubes: [Cuboid]) {
+        self.cubes = cubes
+        self.minusCubes = minusCubes
+    }
+
+    init() {
+        self.init(cubes: [], minusCubes: [])
+    }
+
+    func add(_ other: Cuboid) -> Self {
+        return .init(
+            cubes: cubes + [other] + minusCubes.compactMap(other.overlap(with:)),
+            minusCubes: minusCubes + cubes.compactMap(other.overlap(with:))
+        )
+    }
+
+    func subtract(_ other: Cuboid) -> Self {
+        return .init(
+            cubes: cubes + minusCubes.compactMap(other.overlap(with:)),
+            minusCubes: minusCubes + cubes.compactMap(other.overlap(with:))
+        )
+    }
+
+    func size(in other: Cuboid? = nil) -> Int {
+        if let other = other {
+            return cubes.compactMap { $0.overlap(with: other)?.size() }.sum - minusCubes.compactMap { $0.overlap(with: other)?.size() }.sum
+        } else {
+            return cubes.map { $0.size() }.sum - minusCubes.map { $0.size() }.sum
+        }
+    }
+}
+
 extension RandomAccessCollection {
     func lazyCompactFirstMap<T>(_ transform: (Element) -> T?) -> T? {
         for element in self {
@@ -1667,7 +1761,7 @@ extension RandomAccessCollection {
     }
 }
 
-struct ThreeDPoint: Hashable, CustomStringConvertible {
+struct ThreeDPoint: Comparable, Hashable, CustomStringConvertible {
     let x: Int
     let y: Int
     let z: Int
@@ -1695,6 +1789,11 @@ struct ThreeDPoint: Hashable, CustomStringConvertible {
         abs(other.x - x) + abs(other.y - y) + abs(other.z - z)
     }
 
+    static func < (lhs: ThreeDPoint, rhs: ThreeDPoint) -> Bool {
+        lhs.x < rhs.x ? true :
+            lhs.y < rhs.y ? true :
+                lhs.z < rhs.z
+    }
     var description: String { "(\(x),\(y),\(z))" }
 }
 
