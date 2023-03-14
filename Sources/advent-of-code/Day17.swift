@@ -11,53 +11,79 @@ private func part1(input: String) -> Int {
     var restingRocks: [Rock] = []
     var fallingRock: Rock?
     let floor = (0..<7).map { x in Position(x: x, y: 0) }
-    while restingRocks.count < 2022 {
-        let obstacles = floor + restingRocks.flatMap { $0 }
-        guard let falling = fallingRock else {
-            var next = rocks.shift()
-            let minY = obstacles.map(\.y).min()!
-            let moves = 4 + next.map(\.y).max()! - minY
-            next = move(rock: next, diff: Position(x: 0, y: -moves))
-            fallingRock = next
-            
-//            print("\nState:")
-//            plot(
-//                restingRocks.flatMap { rock in rock.map { ($0, "#") }} + 
-//                    (fallingRock ?? []).map { ($0, "@") } + 
-//                    floor.map { ($0, "_") }
-//            )
-            continue
+    var state = State(gusts: gusts, fallingRocks: rocks)
+    for iteration in (1...2022) {
+        state = state.next()
+        /*
+        plot(
+            state.restingRocks.flatMap { rock in rock.map { ($0, "#") }}// +
+            //(fallingRock ?? []).map { ($0, "@") } +
+            //floor.map { ($0, "_") }
+        )
+        print("")
+        */
+        if iteration % 100 == 0 {
+            print("Iteration: \(iteration)")
+            print(state.restingRocks.count)
+            print(state.height)
         }
-        let gust = gusts.shift()
-        var pushed = move(rock: falling, push: gust)
-        if pushed.contains(where: { obstacles.contains($0) }) {
-            pushed = falling
-        }
-        let fallen = move(rock: pushed, push: .down)
-        if fallen.contains(where: { obstacles.contains($0) }) {
-            restingRocks.append(pushed)
-            fallingRock = nil
-        } else {
-            fallingRock = fallen
-        }
-        
-        if restingRocks.count % 10 == 0 {
-            print("resting: \(restingRocks.count)")
-//            print("\nState:")
-//            plot(
-//                restingRocks.flatMap { rock in rock.map { ($0, "#") }} + 
-//                    (fallingRock ?? []).map { ($0, "@") } + 
-//                    floor.map { ($0, "_") }
-//            )
-        }
-//        
-//        print("Gust: \(gust)")
     }
-    return restingRocks.flatMap { $0.map(\.y) }.range().count
+    return state.height
 }
 
 private func part2(input: String) -> Int {
     return 0
+}
+
+private struct State {
+    let restingRocks: Set<Rock>
+    let gusts: [Push]
+    let fallingRocks: [Rock]
+
+    init(restingRocks: Set<Rock>? = nil, gusts: [Push], fallingRocks: [Rock]) {
+        // Add the floor as the initial state
+        self.restingRocks = restingRocks ?? Set([(0..<7).map { x in Position(x: x, y: 0) }])
+        self.gusts = gusts
+        self.fallingRocks = fallingRocks
+    }
+
+    var height: Int {
+        // Subtract one for the floor
+        return restingRocks.flatMap { $0.map(\.y) }.range().count - 1
+    }
+
+    func next() -> Self {
+        let obstacles = restingRocks.flatMap { $0 }
+        var modifiedFallingRocks = fallingRocks
+        var next = modifiedFallingRocks.shift()
+        var modifiedGusts = gusts
+
+        let minY = obstacles.map(\.y).min()!
+        let moves = 4 + next.map(\.y).max()! - minY
+        next = move(rock: next, diff: Position(x: 0, y: -moves))
+
+        // run through the fall/push loop until `next` is resting
+        while true {
+            let gust = modifiedGusts.shift()
+            var pushed = move(rock: next, push: gust)
+            if pushed.contains(where: { obstacles.contains($0) }) {
+                pushed = next
+            }
+            let fallen = move(rock: pushed, push: .down)
+            if fallen.contains(where: { obstacles.contains($0) }) {
+                next = pushed
+                break
+            } else {
+                next = fallen
+            }
+        }
+
+        return Self(
+            restingRocks: restingRocks.union([next]),
+            gusts: modifiedGusts,
+            fallingRocks: modifiedFallingRocks
+        )
+    }
 }
 
 private typealias Rock = [Position]
@@ -65,7 +91,7 @@ private typealias Rock = [Position]
 private func parse(string: Substring) -> Rock {
     string.split(whereSeparator: \.isNewline)
         .enumerated()
-        .flatMap { y, line in 
+        .flatMap { y, line in
             line.enumerated().filter { _, char in char == "#" }
                 .map(\.0)
                 .map { Position(x: $0, y: y) }
@@ -86,11 +112,11 @@ private func move(rock: Rock, push: Push) -> Rock {
 }
 
 private func move(rock: Rock, diff: Position) -> Rock {
-    let moved = rock.map { pos in 
+    let moved = rock.map { pos in
         pos.move(diff: diff)
     }
     let validXValues = 0..<7
-    if moved.map(\.x).allSatisfy { validXValues.contains($0) } {
+    if moved.map(\.x).allSatisfy({ validXValues.contains($0) }) {
         return moved
     } else {
         return rock

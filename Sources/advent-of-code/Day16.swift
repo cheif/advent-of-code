@@ -190,7 +190,6 @@ private struct Valve: Identifiable, Hashable, CustomDebugStringConvertible {
 
 private func reconstructPath(cameFrom: [Valve: Valve], current: Valve) -> [Valve] {
     var current = current
-    var cameFrom = cameFrom
     var path = [current]
     while cameFrom.keys.contains(current) {
         current = cameFrom[current]!

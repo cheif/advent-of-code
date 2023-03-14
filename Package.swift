@@ -8,13 +8,8 @@ let package = Package(
     platforms: [
         .macOS(.v13),
     ],
-    products: [
-        .executable(
-            name: "advent-of-code",
-            targets: ["advent-of-code"]),
-    ],
     targets: [
-        .target(
+        .executableTarget(
             name: "advent-of-code",
             dependencies: [])
     ]
