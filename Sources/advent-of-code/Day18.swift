@@ -1,5 +1,5 @@
 public func day18() {
-//    print(part1(input: input))
+    //print(part1(input: input))
     print(part2(input: input))
     // 4042 is too high
     // 3978 is too high
@@ -14,13 +14,8 @@ private func part1(input: String) -> Int {
 private func part2(input: String) -> Int {
     let points = input.split(whereSeparator: \.isNewline).map(Point3D.init)
     let droplet = Grid3D(points: points)
-    let voids = droplet.voids()
+    let voids = measure("voids") { droplet.voids() }
     let voidSurfaces = voids.map { void in void.surfaces() }.sum
-    for void in voids {
-        print(void)
-        print(void.surfaces())
-    }
-    // TODO: Calculate void-surface correctly
     return droplet.surfaces() - voidSurfaces
 }
 
@@ -30,45 +25,68 @@ private extension Grid3D {
         let yRange = points.map(\.y).range()
         let zRange = points.map(\.z).range()
         let allCandidates = xRange
-            .flatMap { x in 
-                yRange.flatMap { y in 
-                    zRange.map { z in 
+            .flatMap { x in
+                yRange.flatMap { y in
+                    zRange.map { z in
                         Point3D(x: x, y: y, z: z)
                     }
                 }
             }
             .filter { !points.contains($0) }
-//        print(candidates.filter {self.neighbours(to: $0).count == 6 }.count)
-        let candidatesGrid = Grid3D(points: allCandidates)
         var candidates = allCandidates
-        print(candidates.count)
-        var clusters: [[Point3D]] = []
+        print("candidates:", candidates.count)
+        var clusters: [Grid3D] = []
         while !candidates.isEmpty {
             let next = candidates.removeFirst()
             let neighbours = candidates.filter { $0.distance(to: next) == 1 }
             candidates.removeAll(where: { $0.distance(to: next) == 1})
-            let candidateNeighbours = candidatesGrid.neighbours(to: next)
-            let clusterIndex = clusters.firstIndex(where: { $0.contains(where: { point in point.distance(to: next) == 1 }) })
+            let clusterIndex = clusters.firstIndex(where: { !$0.neighbours(to: next).isEmpty })
             if let clusterIndex = clusterIndex {
-                clusters[clusterIndex] = clusters[clusterIndex] + [next] + neighbours
+                clusters[clusterIndex] = Grid3D(points: clusters[clusterIndex].points + [next] + neighbours)
             } else {
-                clusters.append([next] + neighbours)
+                clusters.append(Grid3D(points: [next] + neighbours))
             }
         }
-        print(clusters.count)
+
+        // Do another pass to merge clusters
+        var changed = true
+        while changed {
+            changed = false
+            for (index, cluster) in clusters.enumerated() {
+                let adjacent = clusters.filter { $0.adjacent(to: cluster) && $0 != cluster }
+                if !adjacent.isEmpty {
+                    clusters[index] = adjacent.reduce(cluster) { acc, adjacent in acc.merge(with: adjacent) }
+                    clusters.removeAll(where: { adjacent.contains($0) })
+                    print("clusters: \(clusters.count)")
+                    changed = true
+                    break
+                }
+            }
+
+        }
+        print("clusters:", clusters.count)
         let voids = clusters
-            .map(Grid3D.init(points:))
             .filter { cluster in
-                cluster.points.allSatisfy { point in 
+                cluster.points.allSatisfy { point in
                     (cluster.neighbours(to: point) + self.neighbours(to: point)).count == 6
                 }
             }
-        print(voids.count)
+        print("voids:", voids.count)
         return voids
     }
-    
+
     func surfaces() -> Int {
         points.map { 6 - self.neighbours(to: $0).count }.sum
+    }
+}
+
+private extension Grid3D {
+    func adjacent(to other: Self) -> Bool {
+        self.points.contains { point in !other.neighbours(to: point).isEmpty }
+    }
+
+    func merge(with other: Self) -> Self {
+        Self(points: points + other.points)
     }
 }
 

@@ -2,7 +2,7 @@ import Foundation
 
 func zip3<A, B, C>(_ a: some Sequence<A>, _ b: some Sequence<B>, _ c: some Sequence<C>) -> some Sequence<(A, B, C)> {
     zip(zip(a, b), c).map { aAndB, c in (aAndB.0, aAndB.1, c) }
-} 
+}
 
 extension Collection where Element: Numeric {
     var sum: Element {
@@ -21,7 +21,7 @@ extension Collection {
                 result.append([element])
             }
         }
-        return result        
+        return result
     }
 }
 
@@ -29,7 +29,11 @@ extension ClosedRange {
     func fullyContains(_ other: ClosedRange) -> Bool {
         lowerBound <= other.lowerBound && upperBound >= other.upperBound
     }
-    
+
+    func expanded(by size: Bound) -> Self where Bound: Numeric {
+        Self(uncheckedBounds: (lowerBound - size, upperBound + size))
+    }
+
     func shrinked(by size: Bound) -> Self where Bound: Numeric {
         Self(uncheckedBounds: (lowerBound + size, upperBound - size))
     }
@@ -40,29 +44,29 @@ struct Grid<V>: Hashable where V: Equatable, V: Hashable {
     let xRange: ClosedRange<Int>
     let yRange: ClosedRange<Int>
     let positions: Set<Position>
-    
+
     func hash(into hasher: inout Hasher) {
         hasher.combine(positions)
     }
-    
+
     init(data: Set<Point>) {
         self.data = data
         self.xRange = data.map(\.x).range()
         self.yRange = data.map(\.y).range()
         self.positions = Set(data.map(\.position))
     }
-    
-    
+
+
     struct Point: Equatable, Hashable, CustomDebugStringConvertible {
         let x: Int
         let y: Int
         let val: V
-        
+
         var debugDescription: String {
             "Point(x: \(x), y: \(y), val: \(val))"
         }
     }
-    
+
     func adjacent(to point: Point) -> [Direction: [Point]] {
         let all = data.filter { $0.x == point.x || $0.y == point.y }
         return [
@@ -81,15 +85,15 @@ extension Grid {
             .map { $0.map { Int(String($0))! } }
         self.init(lines: lines)
     }
-    
+
     init(data: [Point]) {
         self.init(data: Set(data))
     }
-    
+
     init(lines: [[V]]) {
         self.init(data: lines
             .enumerated()
-            .flatMap { y, line in 
+            .flatMap { y, line in
                 line
                     .enumerated()
                     .map { x, val in
@@ -98,7 +102,7 @@ extension Grid {
             }
         )
     }
-    
+
 }
 
 extension Grid.Point {
@@ -114,9 +118,9 @@ enum Direction: Int, CaseIterable {
 extension Direction {
     init?(from character: Character) {
         let map: [Character: Self] = [
-            ">": .right, 
+            ">": .right,
             "v": .down,
-            "<": .left, 
+            "<": .left,
             "^": .up
         ]
         guard let dir = map[character] else {
@@ -124,7 +128,7 @@ extension Direction {
         }
         self = dir
     }
-    
+
     var inverted: Self {
         switch self {
         case .up: return .down
@@ -144,11 +148,11 @@ extension Int {
 struct Position: CustomStringConvertible, Hashable, Comparable {
     let x: Int
     let y: Int
-    
+
     var description: String {
         "Position(x: \(x), y: \(y))"
     }
-    
+
     static func < (lhs: Self, rhs: Self) -> Bool {
         lhs.x <= rhs.x && lhs.y <= rhs.y
     }
@@ -158,7 +162,7 @@ extension Position {
     func distance(to other: Self) -> Int {
         return abs(other.x - self.x) + abs(other.y - self.y)
     }
-    
+
     func move(diff: Position) -> Self {
         Self(x: x + diff.x, y: y + diff.y)
     }
@@ -172,7 +176,7 @@ struct Point3D: CustomDebugStringConvertible, Hashable {
     let x: Int
     let y: Int
     let z: Int
-    
+
     var debugDescription: String {
         "Point3D(x: \(x), y: \(y), z: \(z))"
     }
@@ -182,20 +186,20 @@ extension Point3D {
     init(string: Substring) {
         let parts = string.split(separator: ",")
         self.init(
-            x: Int(parts[0])!, 
-            y: Int(parts[1])!, 
+            x: Int(parts[0])!,
+            y: Int(parts[1])!,
             z: Int(parts[2])!
         )
     }
-    
+
     func distance(to other: Self) -> Int {
         return abs(other.x - self.x) + abs(other.y - self.y) + abs(other.z - self.z)
     }
 }
 
-struct Grid3D {
+struct Grid3D: Equatable {
     let points: [Point3D]
-    
+
     func neighbours(to point: Point3D) -> [Point3D] {
         points.filter { $0.distance(to: point) == 1 }
     }
@@ -205,9 +209,9 @@ func plot(_ points: [(position: Position, symbol: String)]) {
     let allPositions = points.map(\.position)
     let xRange = allPositions.map(\.x).range()
     let yRange = allPositions.map(\.y).range()
-    let description = yRange.map { y in 
+    let description = yRange.map { y in
         let line = xRange
-            .map { x in 
+            .map { x in
                 let position = Position(x: x, y: y)
                 return points.last(where: { pos, _ in pos == position })?.symbol ?? "."
             }
@@ -227,7 +231,7 @@ extension Grid.Point {
     var position: Position {
         Position(x: x, y: y)
     }
-    
+
     func move(in direction: Direction, step: Int = 1) -> Self {
         switch direction {
         case .up: return Self(x: x, y: y-step, val: val)
@@ -268,7 +272,7 @@ func maximizeIterative<State: Hashable>(
     var toTest: [State] = [current]
     var tested = Set<Int>()
     var cameFrom: [State: State] = [:]
-    
+
     var iterations = 0
     while !toTest.isEmpty {
         iterations += 1
@@ -287,7 +291,7 @@ func maximizeIterative<State: Hashable>(
         toTest.append(contentsOf: nonTestedCandidates.filter { maximumPotentialScore($0) > bestKnownScore })
         tested.insert(next.hashValue)
         tested.formUnion(nonTestedCandidates.filter { maximumPotentialScore($0) <= bestKnownScore }.map(\.hashValue))
-        
+
         if iterations % 1000 == 0 {
             print("iteration: \(iterations), candidates: \(toTest.count), tested: \(tested.count), bestFound: \(bestCandidate?.score)")
             toTest.removeAll(where: { tested.contains($0.hashValue) })
@@ -298,8 +302,8 @@ func maximizeIterative<State: Hashable>(
 //            }
         }
     }
-    
-    print("BestFound: \(bestCandidate)")
+
+    print("BestFound: \(bestCandidate!)")
     return [bestCandidate!.state]
 }
 
@@ -310,26 +314,25 @@ func maximizeRecursive<State: Hashable>(
     maximumPotentialScore: ((State) -> Int)? = nil,
     candidates: (State) -> any Collection<State>
 ) -> [State] {
-    var tested = Set<State>()
     var cache: [State: (chain: [State], score: Int)] = [:]
     var bestCandidate: (endState: State, score: Int)?
-    
+
     func maximizeRecursiveWithCache(current: State) -> (chain: [State], score: Int)? {
         if let cached = cache[current] { return cached }
         let bestKnownScore = bestCandidate?.score ?? -1
         guard (maximumPotentialScore?(current) ?? Int.max) > bestKnownScore else { return nil }
-        
+
         let score = score(current)
-        guard !finished(current) else { 
+        guard !finished(current) else {
             if score > bestKnownScore {
                 print("Found best candidate with score: \(score), cacheSize: \(cache.count)")
                 bestCandidate = (current, score)
             }
-            
+
             return ([current], score: score)
         }
         let candidates = candidates(current)
-            .compactMap { candidate in 
+            .compactMap { candidate in
                 maximizeRecursiveWithCache(current: candidate)
             }
         guard let bestChain = candidates.max(by: { $0.score < $1.score }) else {
@@ -349,7 +352,7 @@ struct Graph<T> {
         let from: T
         let to: T
         let weight: Int
-        
+
         var debugDescription: String {
             return "\(from) - [\(weight)] -> \(to)"
         }
