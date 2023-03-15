@@ -28,3 +28,5 @@ let duration = ContinuousClock().measure {
 //    day24()
 //    day25()
 }
+
+print("Took: \(duration)")

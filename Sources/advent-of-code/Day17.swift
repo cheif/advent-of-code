@@ -1,55 +1,104 @@
+import Foundation
+
 public func day17() {
-    print(part1(input: input))
-//    print(part2(input: test))
+    //print(part1(input: input))
+    print(part2(input: input))
 }
 
 private func part1(input: String) -> Int {
-    var gusts = input.map { Push(rawValue: String($0))! }
-    var rocks = rocks
+    let gusts = input.map { Push(rawValue: String($0))! }
+    let rocks = rocks
         .split(separator: "\n\n")
         .map(parse(string:))
-    var restingRocks: [Rock] = []
-    var fallingRock: Rock?
-    let floor = (0..<7).map { x in Position(x: x, y: 0) }
-    var state = State(gusts: gusts, fallingRocks: rocks)
-    for iteration in (1...2022) {
-        state = state.next()
-        /*
-        plot(
-            state.restingRocks.flatMap { rock in rock.map { ($0, "#") }}// +
-            //(fallingRock ?? []).map { ($0, "@") } +
-            //floor.map { ($0, "_") }
-        )
-        print("")
-        */
-        if iteration % 100 == 0 {
-            print("Iteration: \(iteration)")
-            print(state.restingRocks.count)
-            print(state.height)
-        }
-    }
+    let state = State(gusts: gusts, fallingRocks: rocks).simulate(count: 2022)
     return state.height
 }
 
 private func part2(input: String) -> Int {
-    return 0
+    let gusts = input.map { Push(rawValue: String($0))! }
+    let rocks = rocks
+        .split(separator: "\n\n")
+        .map(parse(string:))
+    let state = State(gusts: gusts, fallingRocks: rocks).simulate(count: 1_000_000_000_000)
+    return state.height
 }
 
 private struct State {
     let restingRocks: Set<Rock>
     let gusts: [Push]
     let fallingRocks: [Rock]
+    let extraHeight: Int
 
-    init(restingRocks: Set<Rock>? = nil, gusts: [Push], fallingRocks: [Rock]) {
+    init(restingRocks: Set<Rock>? = nil, gusts: [Push], fallingRocks: [Rock], extraHeight: Int = 0) {
         // Add the floor as the initial state
-        self.restingRocks = restingRocks ?? Set([(0..<7).map { x in Position(x: x, y: 0) }])
+        if let restingRocks,
+            restingRocks.count > 0 {
+            // Optimize this so that it's only the topmost layers
+            let sorted = restingRocks.sorted(by: { $0.map(\.y).min()! < $1.map(\.y).min()! }).prefix(30)
+            let toMove = -sorted.flatMap { $0.map(\.y) }.min()!
+            let pushed = sorted.map { move(rock: $0, diff: Position(x: 0, y: toMove)) }
+            self.restingRocks = Set(pushed)
+            self.extraHeight = extraHeight + toMove
+        } else {
+            self.restingRocks = restingRocks ?? Set([(0..<7).map { x in Position(x: x, y: 0) }])
+            self.extraHeight = extraHeight
+        }
         self.gusts = gusts
         self.fallingRocks = fallingRocks
     }
 
     var height: Int {
-        // Subtract one for the floor
-        return restingRocks.flatMap { $0.map(\.y) }.range().count - 1
+        return extraHeight + -restingRocks.flatMap { $0.map(\.y) }.range().lowerBound
+    }
+
+    func simulate(count: Int) -> Self {
+        let cycle = self.findCycle()
+        // Move forward to cycle-start
+        let state = (0..<cycle.start).reduce(self) { prev, _ in prev.next() }
+        let cyclesToCalculate = Int(floor(Double(count-cycle.start)/Double(cycle.length)))
+        let calculatedHeight = cyclesToCalculate*cycle.heightAdded
+        let roundsToSimulateAtEnd = count - cyclesToCalculate * cycle.length - cycle.start
+        let stateAfterCalculation = Self(
+            restingRocks: state.restingRocks,
+            gusts: state.gusts,
+            fallingRocks: state.fallingRocks,
+            extraHeight: state.extraHeight + calculatedHeight
+        )
+        return (0..<roundsToSimulateAtEnd).reduce(stateAfterCalculation) { prev, _ in prev.next() }
+    }
+
+    typealias Cycle = (start: Int, length: Int, heightAdded: Int)
+    func findCycle() -> Cycle {
+        let repetitionLength = 50
+        var heightChanges: [Int] = []
+        var state = self
+
+        for iteration in (1...) {
+            let next = state.next()
+            heightChanges.append(next.height - state.height)
+            state = next
+            if iteration % 100 == 0 {
+                print("Iteration: \(iteration)")
+                if let cycle = findCycle(heightChanges: heightChanges, repetitionLength: 50) {
+                    return cycle
+                }
+            }
+        }
+
+        func findCycle(heightChanges: [Int], repetitionLength: Int) -> Cycle? {
+            let lastChanges = heightChanges.suffix(repetitionLength)
+
+            let repetitions = (0..<(heightChanges.count-repetitionLength)).filter { start in
+                heightChanges[start...].prefix(repetitionLength) == lastChanges
+            }
+            guard repetitions.count > 1 else { return nil }
+            return (
+                start: repetitions[0],
+                length: repetitions[1] - repetitions[0],
+                heightAdded: heightChanges[repetitions[0]..<repetitions[1]].sum
+            )
+        }
+        fatalError()
     }
 
     func next() -> Self {
@@ -81,7 +130,8 @@ private struct State {
         return Self(
             restingRocks: restingRocks.union([next]),
             gusts: modifiedGusts,
-            fallingRocks: modifiedFallingRocks
+            fallingRocks: modifiedFallingRocks,
+            extraHeight: extraHeight
         )
     }
 }
