@@ -69,7 +69,6 @@ private struct State {
 
     typealias Cycle = (start: Int, length: Int, heightAdded: Int)
     func findCycle() -> Cycle {
-        let repetitionLength = 50
         var heightChanges: [Int] = []
         var state = self
 
