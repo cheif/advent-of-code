@@ -1,103 +1,111 @@
-public func day19() {    
-    print(part1(input: test))
-//    print(part2(input: test))
+public func day19() {
+//    print(part1(input: test))
+    print(part2(input: input))
 }
 
 private func part1(input: String) -> Int {
-    let blueprints = input.split(whereSeparator: \.isNewline).map(Blueprint.init).suffix(1)
-    return blueprints.map { $0.calculateQualityLevel() }.sum
+    let blueprints = input.split(whereSeparator: \.isNewline).map(Blueprint.init)
+    return blueprints.map { blueprint in
+        measure("calculateQualityLevel for blueprint \(blueprint.id)") {
+            blueprint.calculateQualityLevel()
+        }
+    }.sum
 }
 
 private func part2(input: String) -> Int {
-    return 0
+    let blueprints = input.split(whereSeparator: \.isNewline).map(Blueprint.init).prefix(3)
+    return blueprints.map { blueprint in
+        let cracked = measure("largestNumberOfGeodesCracked for blueprint \(blueprint.id)") {
+            blueprint.largestNumberOfGeodesCracked(minutes: 32)
+        }
+        print("Cracked: \(cracked)")
+        return cracked
+    }.reduce(1, *)
 }
 
 private extension Blueprint {
     func calculateQualityLevel() -> Int {
-        return id * largestNumberOfGeodesCracked()
+        return id * largestNumberOfGeodesCracked(minutes: 24)
     }
-    
-    func largestNumberOfGeodesCracked() -> Int {
-        var state = State(
+
+    func largestNumberOfGeodesCracked(minutes: Int) -> Int {
+        let state = State(
             minute: 0,
             materials: .zero,
             robots: Robots(ore: 1, clay: 0, obsidian: 0, geode: 0)
         )
-        let maximized = maximizeRecursive(
-            state, 
-            finished: { $0.minute == 15 },
+        let maximized = maximizeIterative(
+            state,
+            finished: { $0.minute == minutes },
             score: \.materials.geode
+            , maximumPotentialScore: { state in
+                let timeToGo = minutes - state.minute
+                let maximumAdditionalGeodeRobotsBuilt = (0..<timeToGo).sum
+                return state.materials.geode + state.robots.geode * timeToGo + maximumAdditionalGeodeRobotsBuilt
+            }
         ) { state in
             state.possibleStates(blueprint: self)
         }
-        for state in maximized {
-            print(state)
-        }
         return maximized.last!.materials.geode
     }
-    
+
     struct State: Hashable, CustomDebugStringConvertible {
         let minute: Int
         let materials: Materials
         let robots: Robots
-        
+
         var debugDescription: String {
             return "== Minute \(minute) ==\n\(materials)\n\(robots)"
         }
-        
-        func possibleStates(blueprint: Blueprint) -> Set<Self> {
-            var candidates = blueprint.possibleBuilds(using: materials)
-            // Add the no-op candidate
-            candidates.update(with: BuildCandidate(materialsRemaining: materials, newRobots: Robots(ore: 0, clay: 0, obsidian: 0, geode: 0)))
-//            print("minute: \(minute), possibleStates: \(candidates.count)")
-            return Set(candidates.map { candidate in 
+
+        func possibleStates(blueprint: Blueprint) -> [Self] {
+            blueprint.possibleBuilds(using: materials).map { candidate in
                 State(
-                    minute: minute + 1, 
-                    materials: candidate.materialsRemaining + self.robots.materialsHarvested(), 
+                    minute: minute + 1,
+                    materials: candidate.materialsRemaining + self.robots.materialsHarvested(),
                     robots: robots + candidate.newRobots
                 )
-            })
+            }
         }
     }
-    
+
     struct BuildCandidate: Hashable {
         let materialsRemaining: Materials
         let newRobots: Robots
     }
-    
-    private func possibleBuilds(using materials: Materials) -> Set<BuildCandidate> {
+
+    private func possibleBuilds(using materials: Materials) -> [BuildCandidate] {
         var candidates: [BuildCandidate] = []
-        
+
         if materials.canAfford(geodeRobotCost) {
             candidates.append(BuildCandidate(
-                materialsRemaining: materials - geodeRobotCost, 
+                materialsRemaining: materials - geodeRobotCost,
                 newRobots: Robots(ore: 0, clay: 0, obsidian: 0, geode: 1)
             ))
+            // If we can build an geode robot, always do
+            return candidates
         }
+        // Add the no-op candidate
+        candidates.append(BuildCandidate(materialsRemaining: materials, newRobots: Robots(ore: 0, clay: 0, obsidian: 0, geode: 0)))
         if materials.canAfford(obsidianRobotCost) {
             candidates.append(BuildCandidate(
-                materialsRemaining: materials - obsidianRobotCost, 
+                materialsRemaining: materials - obsidianRobotCost,
                 newRobots: Robots(ore: 0, clay: 0, obsidian: 1, geode: 0)
             ))
         }
         if materials.canAfford(clayRobotCost) {
             candidates.append(BuildCandidate(
-                materialsRemaining: materials - clayRobotCost, 
+                materialsRemaining: materials - clayRobotCost,
                 newRobots: Robots(ore: 0, clay: 1, obsidian: 0, geode: 0)
             ))
         }
         if materials.canAfford(oreRobotCost) {
             candidates.append(BuildCandidate(
-                materialsRemaining: materials - oreRobotCost, 
+                materialsRemaining: materials - oreRobotCost,
                 newRobots: Robots(ore: 1, clay: 0, obsidian: 0, geode: 0)
             ))
         }
-        let result = Set(candidates.flatMap { candidate in 
-            self.possibleBuilds(using: candidate.materialsRemaining)
-                .union([candidate])
-        })
-//        print("result: \(result.count)")
-        return result
+        return candidates
     }
 }
 
@@ -106,16 +114,16 @@ private struct Robots: Hashable {
     let clay: Int
     let obsidian: Int
     let geode: Int
-    
+
     func materialsHarvested() -> Materials {
         Materials(
-            ore: self.ore, 
-            clay: self.clay, 
+            ore: self.ore,
+            clay: self.clay,
             obsidian: self.obsidian,
             geode: self.geode
         )
     }
-    
+
     static func + (lhs: Self, rhs: Self) -> Self {
         Self(ore: lhs.ore + rhs.ore, clay: lhs.clay + rhs.clay, obsidian: lhs.obsidian + rhs.obsidian, geode: lhs.geode + rhs.geode)
     }
@@ -126,17 +134,17 @@ private struct Materials: Hashable {
     let clay: Int
     let obsidian: Int
     let geode: Int
-    
+
     static var zero: Materials { Materials(ore: 0, clay: 0, obsidian: 0, geode: 0) }
-    
+
     static func + (lhs: Self, rhs: Self) -> Self {
         Self(ore: lhs.ore + rhs.ore, clay: lhs.clay + rhs.clay, obsidian: lhs.obsidian + rhs.obsidian, geode: lhs.geode + rhs.geode)
     }
-    
+
     static func - (lhs: Self, rhs: Self) -> Self {
         Self(ore: lhs.ore - rhs.ore, clay: lhs.clay - rhs.clay, obsidian: lhs.obsidian - rhs.obsidian, geode: lhs.geode - rhs.geode)
     }
-    
+
     func canAfford(_ other: Materials) -> Bool {
         return ore >= other.ore && clay >= other.clay && obsidian >= other.obsidian && geode >= other.geode
     }
@@ -159,7 +167,7 @@ private struct Blueprint {
     let clayRobotCost: Materials
     let obsidianRobotCost: Materials
     let geodeRobotCost: Materials
-    
+
     init(line: Substring) {
         let splits = line.split(separator: ": ")
         id = Int(splits[0].split(separator: " ")[1])!

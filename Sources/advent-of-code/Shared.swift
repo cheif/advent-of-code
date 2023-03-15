@@ -266,12 +266,11 @@ func maximizeIterative<State: Hashable>(
     finished: @escaping (State) -> Bool,
     score: @escaping (State) -> Int,
     maximumPotentialScore: ((State) -> Int),
-    candidates: (State) -> [State]
+    candidates: (State) -> any Collection<State>
 ) -> [State] {
     var bestCandidate: (state: State, score: Int)?
     var toTest: [State] = [current]
     var tested = Set<Int>()
-    var cameFrom: [State: State] = [:]
 
     var iterations = 0
     while !toTest.isEmpty {
@@ -280,7 +279,6 @@ func maximizeIterative<State: Hashable>(
         let next = toTest.last!
         toTest.removeLast()
         if finished(next) {
-            print("found solution: \(next)")
             let score = score(next)
             if score > bestKnownScore {
                 bestCandidate = (next, score)
@@ -291,19 +289,8 @@ func maximizeIterative<State: Hashable>(
         toTest.append(contentsOf: nonTestedCandidates.filter { maximumPotentialScore($0) > bestKnownScore })
         tested.insert(next.hashValue)
         tested.formUnion(nonTestedCandidates.filter { maximumPotentialScore($0) <= bestKnownScore }.map(\.hashValue))
-
-        if iterations % 1000 == 0 {
-            print("iteration: \(iterations), candidates: \(toTest.count), tested: \(tested.count), bestFound: \(bestCandidate?.score)")
-            toTest.removeAll(where: { tested.contains($0.hashValue) })
-//            if let maximumPotentialScore {
-//                tested.formUnion(toTest.filter { maximumPotentialScore($0) <= bestKnownScore })
-//                toTest.removeAll(where: { maximumPotentialScore($0) <= bestKnownScore })
-                toTest.sort(by: { maximumPotentialScore($0) > maximumPotentialScore($1) })
-//            }
-        }
     }
 
-    print("BestFound: \(bestCandidate!)")
     return [bestCandidate!.state]
 }
 
