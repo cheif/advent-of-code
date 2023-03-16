@@ -1,6 +1,6 @@
 public func day22() {
 //    print(part1(input: input))
-    print(part2(input: test))
+    print(part2(input: input))
 }
 
 private func part1(input: String) -> Int {
@@ -30,7 +30,7 @@ private func part1(input: String) -> Int {
     }
 //    plot(grid, players: players)
     let final = players.last!
-    
+
     return (final.point.y + 1) * 1000 + (final.point.x + 1) * 4 + final.facing.rawValue
 }
 
@@ -40,13 +40,14 @@ private func part2(input: String) -> Int {
         .filter { $0.y == 0 && $0.val == "." }
         .min(by: { $0.x < $1.x })!
     let initialPlayer = Player(point: startPoint, facing: .right)
+    let warpPoints = grid.calculateWarpPoints()
     let players = instructions.reduce([initialPlayer]) { previous, instruction -> [Player] in
         let player = previous.last!
         let next: [Player]
         switch instruction {
         case .move(let steps):
-            next = (0..<steps).reduce([]) { acc, _ in 
-                let next = grid.nextMove(for: acc.last ?? player)
+            next = (0..<steps).reduce([]) { acc, _ in
+                let next = grid.nextMove(for: acc.last ?? player, warpPoints: warpPoints)
                 if next.point.val == "#" {
                     return acc
                 } else {
@@ -61,9 +62,9 @@ private func part2(input: String) -> Int {
         }
         return previous + next
     }
-    plot(grid, players: players)
+    //plot(grid, players: players)
     let final = players.last!
-    
+
     return (final.point.y + 1) * 1000 + (final.point.x + 1) * 4 + final.facing.rawValue
 }
 
@@ -72,29 +73,120 @@ private func plot(_ grid: Grid<Character>, players: [Player]) {
     plot(grid, extra: players.map { ($0.point.position, $0.facing.symbol) })
 }
 
-private struct Player {
+private struct Player: Hashable, CustomDebugStringConvertible {
     let point: Grid<Character>.Point
     let facing: Direction
+
+    var debugDescription: String {
+        "Player(x: \(point.x), y: \(point.y), facing: \(facing))"
+    }
 }
 
 private extension Grid where V == Character {
-    func nextMove(for player: Player) -> Player {
+    func nextMove(for player: Player, warpPoints: [WarpPoint: WarpPoint]) -> Player {
         let adjacent = adjacent(to: player.point)[player.facing]!.filter { $0.val != " " }
         if let point = adjacent.first {
             return Player(point: point, facing: player.facing)
         } else {
             // Player has wrapped around an edge, now things get a bit tricky :sweaty_smile:
-            let point = player.point
-            print("Around edge from: \(player.point)")
-            print(xRange.count / 3 * 2)
-            if point.x == (xRange.count * 2 / 3) + 1 {
-                
+            guard let destination = warpPoints[player] else {
+                fatalError("No warp point for \(player)")
             }
-            print(yRange.count - 1 - player.point.y)
-            return player
-//            return Player(point: point, facing: player.facing)
+            return destination
         }
     }
+
+    typealias WarpPoint = Player
+
+    func pointAt(x: Int, y: Int) -> Point {
+        guard let point = data.first(where: { $0.x == x && $0.y == y }) else {
+            fatalError("No point at: \((x, y))")
+        }
+        return point
+    }
+
+    func calculateWarpPoints() -> [WarpPoint: WarpPoint] {
+        var warpPoints: [WarpPoint: WarpPoint] = [:]
+        let cubeSideLength = max(xRange.count, yRange.count) / 4
+        if cubeSideLength == 4 {
+            warpPoints.append((0..<cubeSideLength).flatMap { mod -> [(WarpPoint, WarpPoint)] in [
+                (
+                    WarpPoint(point: pointAt(x: cubeSideLength * 3 - 1, y: mod), facing: .right),
+                    WarpPoint(point: pointAt(x: cubeSideLength * 4 - 1, y: cubeSideLength * 3 - 1 - mod), facing: .left)
+                    ),
+                (
+                    WarpPoint(point: pointAt(x: cubeSideLength * 3 - 1, y: cubeSideLength + mod), facing: .right),
+                    WarpPoint(point: pointAt(x: cubeSideLength * 4 - 1 - mod, y: cubeSideLength * 2), facing: .down)
+                    ),
+                (
+                    WarpPoint(point: pointAt(x: mod, y: cubeSideLength), facing: .up),
+                    WarpPoint(point: pointAt(x: cubeSideLength * 3 - 1 - mod, y: 0), facing: .down)
+                    ),
+                (
+                    WarpPoint(point: pointAt(x: cubeSideLength + mod, y: cubeSideLength), facing: .up),
+                    WarpPoint(point: pointAt(x: cubeSideLength * 2, y: mod), facing: .right)
+                    ),
+                (
+                    WarpPoint(point: pointAt(x: mod, y: cubeSideLength * 2 - 1), facing: .down),
+                    WarpPoint(point: pointAt(x: cubeSideLength * 3 - 1 - mod, y: cubeSideLength * 3 - 1), facing: .up)
+                    ),
+                (
+                    WarpPoint(point: pointAt(x: cubeSideLength + mod, y: cubeSideLength * 2 - 1), facing: .down),
+                    WarpPoint(point: pointAt(x: cubeSideLength * 2, y: cubeSideLength * 3 - 1 - mod), facing: .right)
+                    ),
+                (
+                    WarpPoint(point: pointAt(x: 0, y: cubeSideLength + mod), facing: .left),
+                    WarpPoint(point: pointAt(x: cubeSideLength * 4 - 1 - mod, y: cubeSideLength * 3 - 1), facing: .up)
+                    ),
+            ]})
+        } else {
+            // Hardcoded for my specific input
+            warpPoints.append((0..<cubeSideLength).flatMap { mod -> [(WarpPoint, WarpPoint)] in [
+                (
+                    WarpPoint(point: pointAt(x: cubeSideLength * 1, y: mod), facing: .left),
+                    WarpPoint(point: pointAt(x: 0, y: cubeSideLength * 3 - 1 - mod), facing: .right)
+                    ),
+                (
+                    WarpPoint(point: pointAt(x: cubeSideLength * 1, y: cubeSideLength + mod), facing: .left),
+                    WarpPoint(point: pointAt(x: mod, y: cubeSideLength * 2), facing: .down)
+                    ),
+                (
+                    WarpPoint(point: pointAt(x: cubeSideLength + mod, y: 0), facing: .up),
+                    WarpPoint(point: pointAt(x: 0, y: cubeSideLength * 3 + mod), facing: .right)
+                    ),
+                (
+                    WarpPoint(point: pointAt(x: cubeSideLength * 2 + mod, y: 0), facing: .up),
+                    WarpPoint(point: pointAt(x: mod, y: cubeSideLength * 4 - 1), facing: .up)
+                    ),
+                (
+                    WarpPoint(point: pointAt(x: cubeSideLength - 1, y: cubeSideLength * 3 + mod), facing: .right),
+                    WarpPoint(point: pointAt(x: cubeSideLength + mod, y: cubeSideLength * 3 - 1), facing: .up)
+                    ),
+                (
+                    WarpPoint(point: pointAt(x: cubeSideLength * 3 - 1, y: mod), facing: .right),
+                    WarpPoint(point: pointAt(x: cubeSideLength * 2 - 1, y: cubeSideLength * 3 - 1 - mod), facing: .left)
+                    ),
+                (
+                    WarpPoint(point: pointAt(x: cubeSideLength * 2 + mod, y: cubeSideLength - 1), facing: .down),
+                    WarpPoint(point: pointAt(x: cubeSideLength * 2 - 1, y: cubeSideLength + mod), facing: .left)
+                    ),
+            ]})
+        }
+        return warpPoints
+    }
+}
+
+extension Dictionary where Key == Player, Value == Player {
+    mutating func append(_ other: [(Key, Value)]) {
+        merge(other, uniquingKeysWith: { lhs, _ in lhs })
+        // Add warp-points the other way around as well
+        let inverted = other.map { key, value in (
+            Player(point: value.point, facing: value.facing.inverted),
+            Player(point: key.point, facing: key.facing.inverted)
+        )}
+        merge(inverted, uniquingKeysWith: { lhs, _ in lhs })
+    }
+
 }
 
 private extension Direction {
@@ -106,7 +198,7 @@ private extension Direction {
             return Self(rawValue: (self.rawValue + 1) % 4)!
         }
     }
-    
+
     var symbol: String {
         switch self {
         case .right: return ">"
@@ -115,7 +207,7 @@ private extension Direction {
         case .up: return "^"
         }
     }
-    
+
     var inverse: Self {
         switch self {
         case .right: return .left
@@ -146,21 +238,21 @@ private func parse(input: String) -> (Grid<Character>, [Instruction]) {
 private enum Instruction {
     case move(Int)
     case turn(Dir)
-    
+
     enum Dir {
         case left, right
     }
 }
 
 private let test = """
-        ...#    
-        .#..    
-        #...    
-        ....    
-...#.......#    
-........#...    
-..#....#....    
-..........#.    
+        ...#
+        .#..
+        #...
+        ....
+...#.......#
+........#...
+..#....#....
+..........#.
         ...#....
         .....#..
         .#......
