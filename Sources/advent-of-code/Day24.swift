@@ -1,7 +1,6 @@
 public func day24() {
-//    print(part1(input: test2))
-    print(part1(input: input))
-//    print(part2(input: test))
+    //print(part1(input: input))
+    print(part2(input: input))
     // 308 is too high
 }
 
@@ -12,167 +11,184 @@ private func part1(input: String) -> Int {
     )
     .removeAll(where: { $0.val == "." })
     let expeditionPosition = grid.xRange
-        .map { Grid<Character>.Point(x: $0, y: 0, val: "E") }
-        .first(where: { !grid.positions.contains($0.position) })!
+        .map { Position(x: $0, y: 0) }
+        .first(where: { !grid.positions.contains($0) })!
     let goal = grid.xRange
-        .map { Grid<Character>.Point(x: $0, y: grid.yRange.max()!, val: "G") }
-        .first(where: { !grid.positions.contains($0.position) })!
-    
-    var state = State(
-        blizzards: grid.data.filter { Direction(from: $0.val) != nil }, 
-        expedition: expeditionPosition, 
-        goal: goal
-//        minute: 0
-    )
-    
+        .map { Position(x: $0, y: grid.yRange.max()!) }
+        .first(where: { !grid.positions.contains($0) })!
+
+    let mazes = measure("creating mazes") { BlizzardMaze.createMazes(from: grid) }
     grid = Grid(data: grid.data.filter { $0.val == "#" || $0.val == "." })
-    
-//    print("Initial state")
-//    plot(state)
-    
-//    var checkedStates: Set<State> = Set()
-    let initialState = state
-    var bestDuration: Int = 400
-    var cameFrom: [State: (state: State, duration: Int)] = [:]
-    var best: State?
-    var statesToCheck = Set([state])
-    func duration(state: State) -> Int {
-        if state == initialState {
-            return 0
-        } else {
-            return 1 + cameFrom[state]!.duration
+
+    struct State: Hashable {
+        let position: Position
+        let minute: Int
+    }
+    let state = State(position: expeditionPosition, minute: 0)
+
+    let best = maximizeIterative(
+        state,
+        finished: { $0.position == goal },
+        score: {  400 - $0.minute }
+        , maximumPotentialScore: { 400 - $0.minute - $0.position.distance(to: goal) },
+        log: { print($0) }
+    ) { state -> [State] in
+        let destinations = mazes[state.minute % mazes.count].edges.filter { $0.from == state.position }.map(\.to)
+        return destinations.map { position in
+            State(
+                position: position,
+                minute: state.minute + 1
+            )
         }
     }
-    var iteration = 1
-    while !statesToCheck.isEmpty {
-        let toCheck = statesToCheck.min(by: { $0.minimumTimeLeft < $1.minimumTimeLeft })!
-        statesToCheck.remove(toCheck)
-        if toCheck.isFinished { 
-            if duration(state: toCheck) < bestDuration {
-                print("Found better candidate: \(duration(state: toCheck))")
-                bestDuration = duration(state: toCheck)
-                best = toCheck
-            }
-            continue
-        }
-        for candidate in toCheck.advance(in: grid) {
-            let minutes = duration(state: toCheck)
-            if let parent = cameFrom[candidate], parent.duration <= minutes {
-                // Already has a better path here, don't do anything
-            } else if (minutes + candidate.minimumTimeLeft) < bestDuration {
-                cameFrom[candidate] = (toCheck, minutes)
-                statesToCheck.insert(candidate)
-            }
-        }
-        
-        if iteration % 100 == 0 {
-            print("iteration: \(iteration), checked: \(cameFrom.count), toCheck: \(statesToCheck.count), bestDuration: \(bestDuration)")
-        }
-        if iteration % 1000 == 0 {
-            print("Best: \(best.map(duration(state:)))")
-        }
-        iteration += 1
-//        }
-    }
-    
-    plot(best!, in: grid)
-    print(duration(state: best!))
-//    let finished = checkedStates.union(statesToCheck).filter(\.isFinished).min(by: { $0.minute < $1.minute })!
-//    plot(finished, in: grid)
-//    print(bestDuration)
-//    return finished.minute
-    return 0
+    print(best)
+    return best.last!.minute
 }
 
-private var blizzardCache: [[Grid<Character>.Point]: [Grid<Character>.Point]] = [:]
-private struct State: Hashable {
-    let blizzards: [Grid<Character>.Point]
-    let expedition: Grid<Character>.Point
-    let goal: Grid<Character>.Point
-//    let minute: Int
-    
-    func advance(in grid: Grid<Character>) -> [Self] {
-        let newBlizzards = stepBlizzards(in: grid)
-        
-        let allMoves = Direction.allCases.map { expedition.move(in: $0) }
-            // It's always possible to stand still
-            + [expedition]
-        let possibleMoves = allMoves
-            .filter { 
-                grid.xRange.shrinked(by: 1).contains($0.x) && 
-                    !newBlizzards.map(\.position).contains($0.position) &&
-                    (
-                        grid.yRange.shrinked(by: 1).contains($0.y) ||
-                            $0.position == goal.position ||
-                            $0.position == expedition.position
-                    )
+private func part2(input: String) -> Int {
+    var grid = Grid(lines: input
+                        .split(whereSeparator: \.isNewline)
+                        .map { line in line.map { $0 }}
+    )
+    .removeAll(where: { $0.val == "." })
+    let expeditionPosition = grid.xRange
+        .map { Position(x: $0, y: 0) }
+        .first(where: { !grid.positions.contains($0) })!
+    let goal = grid.xRange
+        .map { Position(x: $0, y: grid.yRange.max()!) }
+        .first(where: { !grid.positions.contains($0) })!
+
+    let mazes = measure("creating mazes") { BlizzardMaze.createMazes(from: grid) }
+    grid = Grid(data: grid.data.filter { $0.val == "#" || $0.val == "." })
+
+    let maximumTime = 1000
+
+    struct State: Hashable {
+        let position: Position
+        let target: Position
+        let snacksForgotten: Bool
+        let hasSnacks: Bool
+        let minute: Int
+
+        func minimumDuration(start: Position, goal: Position) -> Int {
+            if hasSnacks {
+                return minute
+            } else if snacksForgotten {
+                return minute + position.distance(to: target) + start.distance(to: goal)
+            } else {
+                return minute + position.distance(to: target) + 2 * start.distance(to: goal)
             }
-        return possibleMoves.map { newPosition in
-            Self(blizzards: newBlizzards, expedition: newPosition, goal: goal)//, minute: minute + 1)
         }
     }
-    
-    var isFinished: Bool {
-        expedition.position == goal.position
+    let state = State(
+        position: expeditionPosition,
+        target: goal,
+        snacksForgotten: false,
+        hasSnacks: false,
+        minute: 0
+    )
+
+    let best = maximizeIterative(
+        state,
+        finished: { $0.position == $0.target && $0.hasSnacks },
+        score: {  maximumTime - $0.minute }
+        , maximumPotentialScore: { maximumTime - $0.minimumDuration(start: expeditionPosition, goal: goal) },
+        log: { print($0) }
+    ) { state -> [State] in
+        let destinations = mazes[state.minute % mazes.count].edges.filter { $0.from == state.position }.map(\.to)
+        return destinations.map { position in
+            if position == goal, !state.snacksForgotten {
+                // First time at goal
+                return State(
+                    position: position,
+                    target: expeditionPosition,
+                    snacksForgotten: true,
+                    hasSnacks: false,
+                    minute: state.minute + 1
+                )
+            } else if position == expeditionPosition, state.snacksForgotten {
+                // Back at start
+                return State(
+                    position: position,
+                    target: goal,
+                    snacksForgotten: true,
+                    hasSnacks: true,
+                    minute: state.minute + 1
+                )
+            } else {
+                return State(
+                    position: position,
+                    target: state.target,
+                    snacksForgotten: state.snacksForgotten,
+                    hasSnacks: state.hasSnacks,
+                    minute: state.minute + 1
+                )
+            }
+        }
     }
-    
-    var minimumTimeLeft: Int {
-        expedition.distance(to: goal)
+    print(best)
+    return best.last!.minute
+}
+
+private struct BlizzardMaze {
+    let blizzards: Set<Grid<Character>.Point>
+    let edges: [(from: Position, to: Position)]
+
+    static func createMazes(from grid: Grid<Character>) -> [Self] {
+        let blizzards = grid.data.filter { Direction(from: $0.val) != nil }
+        var uniqueConfigurations = [blizzards]
+        var next = blizzards.stepBlizzards(in: grid)
+        while !uniqueConfigurations.contains(next) {
+            uniqueConfigurations.append(next)
+            next = next.stepBlizzards(in: grid)
+        }
+        let emptyGridPositions = Set(grid.xRange.flatMap { x in grid.yRange.map { y in Position(x: x, y: y) }})
+            .filter { !grid.data.filter { $0.val == "#" }.map(\.position).contains($0) }
+        let uniqueWithEmpty = uniqueConfigurations.map { (blizzards: $0, emptyPositions: emptyGridPositions.subtracting($0.map(\.position))) }
+        return zip(uniqueWithEmpty, uniqueWithEmpty.dropFirst() + uniqueWithEmpty.prefix(1))
+            .map { current, next in
+                Self(
+                    blizzards: current.blizzards,
+                    edges: current.emptyPositions.flatMap { from in
+                        from.allMoves.intersection(next.emptyPositions).map { to in
+                            (from: from, to: to)
+                        }
+                    }
+                )
+            }
     }
-    
-//    var minimumDuration: Int {
-//        minute + expedition.distance(to: goal)
-//    }
-//    
-//    var potential: Int {
-//        10000 - 10 * expedition.distance(to: goal) - minute
-//    }
-    
-    private func stepBlizzards(in grid: Grid<Character>) -> [Grid<Character>.Point] {
-        if let cached = blizzardCache[blizzards] { return cached }
-        let res = blizzards.compactMap { point -> Grid<Character>.Point? in 
+}
+
+private extension Collection where Element == Grid<Character>.Point {
+    func stepBlizzards(in grid: Grid<Character>) -> Set<Element> {
+        let res = compactMap { point -> Grid<Character>.Point? in
             guard let direction = Direction(from: point.val) else {
                 return nil
             }
             return grid.moveWithWrapping(point: point, in: direction)
         }
-        blizzardCache[blizzards] = res
-        return res
+        return Set(res)
+    }
+
+    func emptyPositions(in grid: Grid<Character>) -> [Position] {
+        grid.xRange.flatMap { x in grid.yRange.map { y in Position(x: x, y: y) }}
+            .filter { !self.map(\.position).contains($0) }
+            .filter { !grid.data.filter { $0.val == "#" }.map(\.position).contains($0) }
     }
 }
 
-private func plot(_ state: State, in grid: Grid<Character>) {
-    let blizzards = Dictionary(grouping: state.blizzards, by: \.position)
-        .map { position, values in 
-            if values.count > 1 {
-                return (position, "\(values.count)")
-            } else {
-                return (position, "\(values[0].val)")
-            }
-        }
-    plot(grid, extra: blizzards + [(state.expedition.position, String(state.expedition.val))])
-    print("")
-}
-
-private func part2(input: String) -> Int {
-    return 0
+private extension Position {
+    var allMoves: Set<Self> {
+        Set(
+            Direction.allCases.map { self.move(in: $0) }
+            // It's always possible to stand still
+            + [self]
+        )
+    }
 }
 
 private extension Grid where V == Character {
-    func stepBlizzards() -> Self {
-        let blizzards = data.compactMap { point -> (from: Point, to: Point)? in 
-            guard let direction = Direction(from: point.val) else {
-                return nil
-            }
-            return (from: point, to: self.moveWithWrapping(point: point, in: direction))
-        }
-        let moves: [Point: Point] = Dictionary(uniqueKeysWithValues: blizzards)
-        let transformed = data.map { moves[$0] ?? $0 }
-        return Self(data: transformed)
-        
-    }
-    
-    fileprivate func moveWithWrapping(point: Point, in direction: Direction) -> Point {
+    func moveWithWrapping(point: Point, in direction: Direction) -> Point {
         var destination = point.move(in: direction)
         if !xRange.shrinked(by: 1).contains(destination.x) {
             // Move backwards so it appears on other side
@@ -183,7 +199,11 @@ private extension Grid where V == Character {
             destination = point.move(in: direction.inverted, step: yRange.count - 3)
         }
         return destination
-        
+    }
+
+    var goal: Point { xRange
+        .map { Grid<Character>.Point(x: $0, y: yRange.max()!, val: "G") }
+        .first(where: { !positions.contains($0.position) })!
     }
 }
 

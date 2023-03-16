@@ -166,6 +166,15 @@ extension Position {
     func move(diff: Position) -> Self {
         Self(x: x + diff.x, y: y + diff.y)
     }
+
+    func move(in direction: Direction, step: Int = 1) -> Self {
+        switch direction {
+        case .up: return Self(x: x, y: y-step)
+        case .down: return Self(x: x, y: y+step)
+        case .left: return Self(x: x-step, y: y)
+        case .right: return Self(x: x+step, y: y)
+        }
+    }
 }
 
 struct Grid2D {
@@ -266,6 +275,7 @@ func maximizeIterative<State: Hashable>(
     finished: @escaping (State) -> Bool,
     score: @escaping (State) -> Int,
     maximumPotentialScore: ((State) -> Int),
+    log: (String) -> Void = { _ in },
     candidates: (State) -> any Collection<State>
 ) -> [State] {
     var bestCandidate: (state: State, score: Int)?
@@ -289,6 +299,9 @@ func maximizeIterative<State: Hashable>(
         toTest.append(contentsOf: nonTestedCandidates.filter { maximumPotentialScore($0) > bestKnownScore })
         tested.insert(next.hashValue)
         tested.formUnion(nonTestedCandidates.filter { maximumPotentialScore($0) <= bestKnownScore }.map(\.hashValue))
+        if iterations % 100 == 0 {
+            log("Iteration: \(iterations), tested: \(tested.count), toTest: \(toTest.count), best: \(bestKnownScore)")
+        }
     }
 
     return [bestCandidate!.state]
@@ -298,40 +311,28 @@ func maximizeRecursive<State: Hashable>(
     _ current: State,
     finished: @escaping (State) -> Bool,
     score: @escaping (State) -> Int,
-    maximumPotentialScore: ((State) -> Int)? = nil,
     candidates: (State) -> any Collection<State>
 ) -> [State] {
-    var cache: [State: (chain: [State], score: Int)] = [:]
-    var bestCandidate: (endState: State, score: Int)?
+    var cache: [State: [State]] = [:]
 
-    func maximizeRecursiveWithCache(current: State) -> (chain: [State], score: Int)? {
+    func maximizeRecursiveWithCache(current: State) -> [State] {
         if let cached = cache[current] { return cached }
-        let bestKnownScore = bestCandidate?.score ?? -1
-        guard (maximumPotentialScore?(current) ?? Int.max) > bestKnownScore else { return nil }
 
-        let score = score(current)
-        guard !finished(current) else {
-            if score > bestKnownScore {
-                print("Found best candidate with score: \(score), cacheSize: \(cache.count)")
-                bestCandidate = (current, score)
-            }
-
-            return ([current], score: score)
-        }
+        guard !finished(current) else { return [current] }
         let candidates = candidates(current)
             .compactMap { candidate in
                 maximizeRecursiveWithCache(current: candidate)
             }
-        guard let bestChain = candidates.max(by: { $0.score < $1.score }) else {
-            return ([current], score)
+        guard let bestChain = candidates.max(by: { score($0.last!) < score($1.last!) }) else {
+            return [current]
         }
-        let result = (chain: [current] + bestChain.chain, score: bestChain.score)
+        let result = [current] + bestChain
         cache[current] = result
         return result
     }
     let res = maximizeRecursiveWithCache(current: current)
     print("Cache size: \(cache.count)")
-    return res!.chain
+    return res
 }
 
 struct Graph<T> {
