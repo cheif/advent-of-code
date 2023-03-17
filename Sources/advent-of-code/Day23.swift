@@ -7,7 +7,7 @@ private func part1(input: String) -> Int {
     var grid = Grid(lines: input.split(whereSeparator: \.isNewline)
                         .map { line in line.map { $0 }} )
         .removeAll(where: { $0.val == "." })
-    
+
     print("== Initial State ==")
     plot(grid)
     print("")
@@ -15,12 +15,12 @@ private func part1(input: String) -> Int {
     for round in 1...10 {
         let roundDuration = ContinuousClock().measure {
             let moves = grid.moves(directions: directions)
-            grid = Grid(data: grid.data.map { elf in 
+            grid = Grid(data: grid.data.map { elf in
                 moves[elf] ?? elf
             })
             directions.shift()
         }
-        
+
         print("Round \(round) duration: \(roundDuration)")
 //        print("== End of Round \(round) ==")
 //        plot(grid)
@@ -41,12 +41,12 @@ private func part2(input: String) -> Int {
         previous = grid
         let roundDuration = ContinuousClock().measure {
             let moves = grid.moves(directions: directions)
-            grid = Grid(data: grid.data.map { elf in 
+            grid = Grid(data: grid.data.map { elf in
                 moves[elf] ?? elf
             })
             directions.shift()
         }
-        
+
         print("Round \(round) duration: \(roundDuration)")
         if previous == grid {
             lastRound = round
@@ -58,12 +58,12 @@ private func part2(input: String) -> Int {
 
 private extension Grid {
     func moves(directions: [Direction]) -> [Point: Point] {
-        var proposedMoves: [(from: Point, dir: Direction)] = [] 
+        var proposedMoves: [(elf: Point, dir: Direction)] = []
         let duration = ContinuousClock().measure {
         proposedMoves = self.data
-            .compactMap { elf -> (from: Point, dir: Direction)? in
+            .compactMap { elf -> (elf: Point, dir: Direction)? in
                 let neighbours = self.neighbours(of: elf)
-                guard !neighbours.values.flatMap { $0 }.isEmpty else {
+                guard !neighbours.values.flatMap({ $0 }).isEmpty else {
                     return nil
                 }
                 return directions
@@ -73,10 +73,10 @@ private extension Grid {
         }
         print("ProposedMoves: \(duration)")
         let filteredMoves = Dictionary(grouping: proposedMoves
-                                        .map { elf, dir in (from: elf, to: elf.move(in: dir)) }, 
+                                        .map { elf, dir in (from: elf, to: elf.move(in: dir)) },
                                        by: \.to)
             .map(\.value)
-            .compactMap { moves -> (from: Point, to: Point)? in 
+            .compactMap { moves -> (from: Point, to: Point)? in
                 if moves.count > 1 {
                     return nil
                 } else {
@@ -85,7 +85,7 @@ private extension Grid {
             }
         return Dictionary(uniqueKeysWithValues: filteredMoves)
     }
-    
+
     func neighbours(of point: Point) -> [Direction: [Point]] {
         let neighbours = data.filter { $0.distance(to: point) <= 2 }
         return [
@@ -117,7 +117,7 @@ private let test = """
 ##.#.##
 .#..#..
 """
- 
+
 private let input = """
 #.#.#.#.......##.#.####......#...###.#.#..#.#.##.#.#...#...###.#.######...
 .##.###.###.#...###.#.........#...##.##.#.#...#...##.....##.##.#.#.#...#.#

@@ -6,7 +6,7 @@ public func day21() {
 
 private func part1(input: String) -> Int {
     let monkeys = Dictionary(uniqueKeysWithValues: input.split(whereSeparator: \.isNewline)
-        .map { 
+        .map {
             let split = $0.split(separator: ": ")
             return (split[0], Job(string: split[1]))
         })
@@ -15,7 +15,7 @@ private func part1(input: String) -> Int {
 
 private func part2(input: String) -> Int {
     var monkeys = Dictionary(uniqueKeysWithValues: input.split(whereSeparator: \.isNewline)
-        .map { 
+        .map {
             let split = $0.split(separator: ": ")
             return (split[0], Job(string: split[1]))
         })
@@ -47,7 +47,7 @@ private func part2(input: String) -> Int {
     }
     print(reduced)
     print(monkeys["root"]!)
-    
+
     // Sanity check
     print(monkeys["root"]!.resolve(with: ["humn": .number(result!)]))
     return result!
@@ -60,7 +60,7 @@ private func reduce(job: Job) -> Job {
             return .calculate(new, .equal, inverse(rhs)).resolve(with: [:])
         } else if let (new, inverse) = rhs.inverse() {
             return .calculate(inverse(lhs), .equal, new).resolve(with: [:])
-            
+
         } else {
             return job
         }
@@ -77,14 +77,14 @@ private extension Job.RefOrNumber {
             switch op {
             case .plus:
                 return (
-                    keepLhs ? lhs : rhs, 
+                    keepLhs ? lhs : rhs,
                     { .other(.calculate($0, .minus, keepLhs ? rhs : lhs)) }
                 )
             case .minus:
                 return (
-                    keepLhs ? lhs : rhs, 
-                    { .other(keepLhs ? 
-                                .calculate($0, .plus, rhs) : 
+                    keepLhs ? lhs : rhs,
+                    { .other(keepLhs ?
+                                .calculate($0, .plus, rhs) :
                                 .calculate(lhs, .minus, $0)
                     )}
                 )
@@ -92,8 +92,8 @@ private extension Job.RefOrNumber {
                 return (keepLhs ? lhs : rhs, { .other(.calculate($0, .divide, keepLhs ? rhs : lhs)) })
             case .divide:
                 return (
-                    keepLhs ? lhs : rhs, 
-                    { .other(keepLhs ? 
+                    keepLhs ? lhs : rhs,
+                    { .other(keepLhs ?
                                 .calculate($0, .multiply, rhs) :
                                 .calculate(lhs, .divide, $0)
                     )}
@@ -121,7 +121,7 @@ private extension Job {
             }
         }
     }
-    
+
     func resolve(with monkeys: [Substring: Job]) -> Self {
         if let value = calculate(with: monkeys) {
             return .number(value)
@@ -156,11 +156,11 @@ private extension Job.RefOrNumber {
             return job.calculate(with: monkeys)
         }
     }
-    
+
     func resolve(with monkeys: [Substring: Job]) -> Self {
         switch self {
         case .other(let job):
-            return .other(job.resolve(with: monkeys) ?? job)
+            return .other(job.resolve(with: monkeys))
         case .ref(let ref):
             return monkeys[ref].map { .other($0) } ?? self
         }
@@ -170,11 +170,11 @@ private extension Job.RefOrNumber {
 private indirect enum Job: CustomDebugStringConvertible {
     case number(Int)
     case calculate(RefOrNumber, Op, RefOrNumber)
-    
+
     enum RefOrNumber: CustomDebugStringConvertible {
         case ref(Substring)
         case other(Job)
-        
+
         var allRefs: Set<Substring> {
             switch self {
             case .ref(let ref):
@@ -183,7 +183,7 @@ private indirect enum Job: CustomDebugStringConvertible {
                 return job.allRefs
             }
         }
-        
+
         var debugDescription: String {
             switch self {
             case .ref(let name):
@@ -193,7 +193,7 @@ private indirect enum Job: CustomDebugStringConvertible {
             }
         }
     }
-    
+
     enum Op: String {
         case plus = "+"
         case minus = "-"
@@ -201,7 +201,7 @@ private indirect enum Job: CustomDebugStringConvertible {
         case divide = "/"
         case equal = "="
     }
-    
+
     var debugDescription: String {
         switch self {
         case .number(let value):
@@ -210,7 +210,7 @@ private indirect enum Job: CustomDebugStringConvertible {
             return "(\(lhs) \(op.rawValue) \(rhs))"
         }
     }
-    
+
     init(string: Substring) {
         if let value = Int(string) {
             self = .number(value)
@@ -219,11 +219,11 @@ private indirect enum Job: CustomDebugStringConvertible {
             self = .calculate(.ref(parts[0]), Op(rawValue: String(parts[1]))!, .ref(parts[2]))
         }
     }
-    
-    var isUnresolved: Bool { 
+
+    var isUnresolved: Bool {
         !self.allRefs.isEmpty
     }
-    
+
     var allRefs: Set<Substring> {
         switch self {
         case .calculate(let lhs, _, let rhs):
@@ -232,7 +232,7 @@ private indirect enum Job: CustomDebugStringConvertible {
             return Set()
         }
     }
-    
+
     func changeOperator(to new: Op) -> Self {
         switch self {
         case .calculate(let lhs, _, let rhs):

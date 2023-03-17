@@ -4,20 +4,20 @@ public func day3() {
 }
 
 private func part1(input: String) -> Int {
-    let rucksacks = input.split(whereSeparator: \.isNewline).map { 
+    let rucksacks = input.split(whereSeparator: \.isNewline).map {
         ($0.prefix($0.count/2), $0.dropFirst($0.count/2))
     }
-    let sharedItems = rucksacks.map { firstCompartment, secondCompartment in 
+    let sharedItems = rucksacks.map { firstCompartment, secondCompartment in
         Set(firstCompartment.filter(secondCompartment.contains))
     }
-    let priorities = sharedItems.flatMap { $0.map(value(for:)).sum }
+    let priorities = sharedItems.compactMap { $0.map(value(for:)).sum }
     return priorities.sum
 }
 
 private func part2(input: String) -> Int {
     let rucksacks = input.split(whereSeparator: \.isNewline)
     let groups = rucksacks.chunked(into: 3)
-    let badges = groups.map { rucksacks in 
+    let badges = groups.map { rucksacks in
         Set(rucksacks[0].filter { rucksacks[1].contains($0) && rucksacks[2].contains($0) })
     }
     return badges.flatMap { $0.map(value(for: )) }.sum

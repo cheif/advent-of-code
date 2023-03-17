@@ -22,7 +22,7 @@ private func part2(input: String) -> Int {
 }
 
 private func createFs(input: String) -> Directory {
-    var fs = Directory(name: "/", parent: nil)
+    let fs = Directory(name: "/", parent: nil)
     var current = fs
     var commands = input.split(whereSeparator: \.isNewline)
     while !commands.isEmpty {
@@ -48,7 +48,7 @@ private func createFs(input: String) -> Directory {
             case "..":
                 current = current.parent!
             default:
-                current = current.contents.compactMap { c in 
+                current = current.contents.compactMap { c in
                     if case .directory(let dir) = c {
                         return dir
                     } else {
@@ -67,20 +67,20 @@ class Directory: CustomStringConvertible {
     let name: String
     let parent: Directory?
     var contents: [Content]
-    
+
     init(name: String, parent: Directory?) {
         self.name = name
         self.parent = parent
         self.contents = []
     }
-    
+
     enum Content {
         case file(name: String, size: Int)
         case directory(Directory)
     }
-    
+
     var size: Int {
-        contents.map { content in 
+        contents.map { content in
             switch content {
             case .file(_, let size):
                 return size
@@ -89,9 +89,9 @@ class Directory: CustomStringConvertible {
             }
         }.sum
     }
-    
+
     var subDirectories: [Directory] {
-        self.contents.flatMap { content in 
+        self.contents.flatMap { content in
             switch content {
             case .directory(let subDir):
                 return [subDir] + subDir.subDirectories
@@ -100,7 +100,7 @@ class Directory: CustomStringConvertible {
             }
         }
     }
-    
+
     var description: String {
         "Directory(name: \(name), contents: \(contents))"
     }

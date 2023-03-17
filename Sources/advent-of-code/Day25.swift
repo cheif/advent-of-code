@@ -69,7 +69,7 @@ private func from(decimal: Int) -> String {
         padding = closestSnafu.snafu.count - 1
         print("Snafu: \(snafu), decimal: \(from(snafu: snafu))")
     }
-    
+
     return snafu
 }
 

@@ -263,6 +263,7 @@ extension Collection where Element == Int {
 }
 
 extension RangeReplaceableCollection {
+    @discardableResult
     mutating func shift() -> Element {
         let element = removeFirst()
         self.append(element)

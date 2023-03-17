@@ -6,13 +6,13 @@ public func day13() {
 }
 
 private func part1(input: String) -> Int {
-    let pairs: [Pair] = input.split(separator: "\n\n").map { 
+    let pairs: [Pair] = input.split(separator: "\n\n").map {
         let split = $0.split(whereSeparator: \.isNewline)
         return (split[0], split[1])
     }
     let processed = pairs
         .enumerated()
-        .map { idx, pair in 
+        .map { idx, pair in
             print("== Pair \(idx + 1) ==")
             let correctOrder = compare(left: pair.left, right: pair.right, log: { print($0) })!
             print("")
@@ -27,15 +27,15 @@ private func part2(input: String) -> Int {
     let packets = input.split(separator: "\n")
         .filter { !$0.isEmpty }
         + dividerPackets
-    
+
     var unsorted = packets
     var sorted: [Substring] = []
-    while !unsorted.isEmpty   { 
-        let next = unsorted.first(where: { packet in 
+    while !unsorted.isEmpty   {
+        let next = unsorted.first(where: { packet in
             unsorted
                 .filter { $0 != packet }
                 .allSatisfy { compare(left: packet, right: $0) ?? false }
-        })        
+        })
         unsorted.removeAll(where: { $0 == next })
         sorted.append(next!)
     }
@@ -43,38 +43,6 @@ private func part2(input: String) -> Int {
         print(packet)
     }
     return dividerPackets.map { packet in sorted.firstIndex(of: packet)! + 1 }.reduce(1, *)
-    /*
-    var sorted = packets
-    for i in 1...10 {
-        let unsorted = zip(sorted, sorted.dropFirst()).compactMap { prev, curr in
-            if !compare(left: prev, right: curr)! {
-                return prev
-            } else {
-                return nil
-            }
-        }
-        print("unsorted: \(unsorted)")
-        for packet in unsorted {
-            guard let index = sorted.firstIndex(where: { compare(left: packet, right: $0) ?? false }) else {
-                continue
-            }
-            print("Can place \(packet) at \(index)")
-            sorted.removeAll(where: { $0 == packet })
-            sorted.insert(packet, at: index)
-        }
-    }
- */
-    print(packets)
-//    let processed = pairs
-//        .enumerated()
-//        .map { idx, pair in 
-//            print("== Pair \(idx + 1) ==")
-//            let correctOrder = compare(left: pair.left, right: pair.right, indent: 0)!
-//            print("")
-//            return (idx: idx + 1, pair: pair, correctOrder: correctOrder)
-//        }
-//    print(processed.filter { _, _, correctOrder in correctOrder }.map(\.idx))
-    return 0
 }
 
 typealias Pair = (left: Substring, right: Substring)

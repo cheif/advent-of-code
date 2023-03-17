@@ -29,14 +29,14 @@ private func parse(input: String) -> ([[Character]], [Move]) {
     let stackLines = splitted[0]
         .split(whereSeparator: \.isNewline)
         .map(Array.init)
-        .map { line in 
+        .map { line in
             let noStacks = (line.count + 1) / 4
             let offsets = (0..<noStacks).map { $0 * 4 + 1 }
             return offsets.map { line[$0] }
         }
         .dropLast()
     let noStacks = stackLines[0].count
-    var stacks = (0..<noStacks).map { index in
+    let stacks = (0..<noStacks).map { index in
         stackLines.compactMap { line in
             let eln = line[index]
             if eln != " " {
@@ -52,7 +52,7 @@ private func parse(input: String) -> ([[Character]], [Move]) {
 typealias Move = (from: Int, to: Int, count: Int)
 private func parseMoves(input: String) -> [Move] {
     return input.split(whereSeparator: \.isNewline)
-        .map { line in 
+        .map { line in
             let integers = line.split(whereSeparator: \.isWhitespace).compactMap { Int($0) }
             return (
                 from: integers[1],
@@ -60,14 +60,13 @@ private func parseMoves(input: String) -> [Move] {
                 count: integers[0]
             )
         }
-    return []
 }
 
 private let test = """
-    [D]    
-[N] [C]    
+    [D]
+[N] [C]
 [Z] [M] [P]
- 1   2   3 
+ 1   2   3
 
 move 1 from 2 to 1
 move 3 from 1 to 3
@@ -76,7 +75,7 @@ move 1 from 1 to 2
 """
 
 private let input = """
-    [C]         [Q]         [V]    
+    [C]         [Q]         [V]
     [D]         [D] [S]     [M] [Z]
     [G]     [P] [W] [M]     [C] [G]
     [F]     [Z] [C] [D] [P] [S] [W]
@@ -84,7 +83,7 @@ private let input = """
 [G] [B] [V] [R] [L] [N] [G] [P] [F]
 [R] [T] [S] [S] [S] [T] [D] [L] [P]
 [N] [J] [M] [L] [P] [C] [H] [Z] [R]
- 1   2   3   4   5   6   7   8   9 
+ 1   2   3   4   5   6   7   8   9
 
 move 2 from 4 to 6
 move 4 from 5 to 3

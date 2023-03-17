@@ -66,7 +66,7 @@ private struct State {
     let restingSand: Set<Point>
     let surface: Set<Point>
     let floor: Bool
-    
+
     init(
         rocks: Set<Point>,
         fallingSand: Point? = nil,
@@ -87,17 +87,17 @@ private struct State {
             self.surface = rocks
         }
     }
-    
+
     var ranges: (ClosedRange<Int>, ClosedRange<Int>) {
         let allPoints = rocks.union([fallingSand].compactMap { $0 }).union(restingSand)
         let xRange = (allPoints.map(\.x).min()!)...(allPoints.map(\.x).max()!)
         let yRange = 0...(allPoints.map(\.y).max()!)
         return (xRange, yRange)
     }
-    
+
     func description(in xRange: ClosedRange<Int>, yRange: ClosedRange<Int>) -> String {
-        let rows = yRange.map { y in 
-            xRange.map { x in 
+        let rows = yRange.map { y in
+            xRange.map { x in
                 let point = Point(x: x, y: y)
                 if rocks.contains(point) {
                     return "#"
@@ -112,10 +112,10 @@ private struct State {
         }
         return rows.joined(separator: "\n")
     }
-    
+
     func surface(in xRange: ClosedRange<Int>, yRange: ClosedRange<Int>) -> String {
-        let rows = yRange.map { y in 
-            xRange.map { x in 
+        let rows = yRange.map { y in
+            xRange.map { x in
                 let point = Point(x: x, y: y)
                 if surface.contains(point) {
                     return "#"
@@ -135,16 +135,8 @@ extension State {
         guard let falling = fallingSand else {
             print(self)
             fatalError()
-            return Self(
-                rocks: rocks, 
-                fallingSand: Point(x: 500, y: 0), 
-                previousFallingSands: [], 
-                restingSand: restingSand, 
-                surface: surface,
-                floor: floor
-            )
         }
-        guard let nextYStop = occupied.filter { $0.x == falling.x && $0.y > falling.y }.map(\.y).min() ?? floorStop else {
+        guard let nextYStop = occupied.filter({ $0.x == falling.x && $0.y > falling.y }).map(\.y).min() ?? floorStop else {
             return nil
         }
         let candidates = [-1, 1].map { xOffset in Point(x: falling.x + xOffset, y: nextYStop) }
@@ -162,7 +154,7 @@ extension State {
                 floor: floor
             )
         } else {
-            let resting = Point(x: falling.x, y: nextYStop - 1) 
+            let resting = Point(x: falling.x, y: nextYStop - 1)
             let fallingSand: Point?
             let previousFalling: [Point]
             if resting != falling {
@@ -173,7 +165,7 @@ extension State {
                 previousFalling = Array(previousFallingSands.dropLast())
             }
             let newSurface = restingSand.count % 1000 == 0 ? calculateSurface(from: surface, adding: resting) : surface.union([resting])
-            
+
             return Self(
                 rocks: rocks,
                 fallingSand: fallingSand,
@@ -184,12 +176,12 @@ extension State {
             )
         }
     }
-    
+
     private var occupied: Set<Point> {
         rocks.union(restingSand)
     }
-    
-    private func isValid(candidate: Point) -> Bool { 
+
+    private func isValid(candidate: Point) -> Bool {
         !occupied.contains(candidate) && (candidate.y < floorStop ?? .max)
     }
 }
@@ -199,9 +191,9 @@ private func calculateSurface(from surface: Set<Point>, adding new: Point) -> Se
     let mightBeRemoved = newSurface.filter { $0.distance(to: new) == 1 || ($0.x == new.x && $0.y < new.y) }
     let toRemove: [Point] = mightBeRemoved.filter { point -> Bool in
         let hasAbove = newSurface.contains(Point(x: point.x, y: point.y - 1))
-        let hasToLeft = newSurface.contains(Point(x: point.x - 1, y: point.y)) || 
+        let hasToLeft = newSurface.contains(Point(x: point.x - 1, y: point.y)) ||
             newSurface.contains(Point(x: point.x - 1, y: point.y - 1))
-        let hasToRight = newSurface.contains(Point(x: point.x + 1, y: point.y)) || 
+        let hasToRight = newSurface.contains(Point(x: point.x + 1, y: point.y)) ||
             newSurface.contains(Point(x: point.x + 1, y: point.y - 1))
         return hasAbove && hasToLeft && hasToRight
 //        return newSurface.isSuperset(of: neighbours)
@@ -214,14 +206,14 @@ private func calculateSurface(from surface: Set<Point>, adding new: Point) -> Se
 
 private func parseRocks(_ input: String) -> [Point] {
     input.split(whereSeparator: \.isNewline)
-        .map { line in 
-            line.split(separator: " -> ").map { point in 
+        .map { line in
+            line.split(separator: " -> ").map { point in
                 let parts = point.split(separator: ",")
                 return Point(x: Int(parts[0])!, y: Int(parts[1])!)
             }
         }
-        .flatMap { points in 
-            zip(points, points.dropFirst()).flatMap { start, end in 
+        .flatMap { points in
+            zip(points, points.dropFirst()).flatMap { start, end in
                 if start.x == end.x {
                     let yRange = Swift.min(start.y, end.y)...Swift.max(start.y, end.y)
                     return yRange.map { Point(x: start.x, y: $0) }
@@ -238,7 +230,7 @@ private func parseRocks(_ input: String) -> [Point] {
 private extension Collection where Element == Point {
     func intersects(point: Point) -> Bool {
         let pairs = zip(self, self.dropFirst())
-        return pairs.contains(where: { lhs, rhs in 
+        return pairs.contains(where: { lhs, rhs in
             if lhs.x == rhs.x {
                 let yRange = Swift.min(lhs.y, rhs.y)...Swift.max(lhs.y, rhs.y)
                 return lhs.x == point.x && yRange.contains(point.y)
@@ -255,7 +247,7 @@ private extension Collection where Element == Point {
 private struct Point: Equatable, Hashable {
     let x: Int
     let y: Int
-    
+
     func distance(to other: Point) -> Int {
         abs(x - other.x) + abs(y - other.y)
     }

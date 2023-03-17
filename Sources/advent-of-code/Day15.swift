@@ -12,7 +12,7 @@ private func part1(input: String, row: Int) -> Int {
     let atRow = xRange.map { Position(x: $0, y: row) }
     print("Candidate positions: \(atRow.count)")
     let beaconFreePositions = atRow
-        .filter { position in 
+        .filter { position in
             let canHaveBeacon = !sensors.contains(where: { sensor in sensor.covers(position) && sensor.closestBeacon != position })
             return !canHaveBeacon
         }
@@ -29,7 +29,7 @@ private func part2(input: String, max: Int) -> Int {
         }
         let coverages = sensors.compactMap { $0.coverage(at: row) }.merged()
         if coverages.count > 1 {
-            let gaps = coverages.reduce([]) { acc, range in 
+            let gaps = coverages.reduce([]) { acc, range in
                 acc + [range.upperBound + 1]
             }.filter(validRange.contains(_:))
             assert(gaps.count == 1)
@@ -43,32 +43,32 @@ private struct Sensor: CustomDebugStringConvertible {
     let position: Position
     let closestBeacon: Position
     private var distance: Int { position.distance(to: closestBeacon) }
-    
+
     var outerCoverage: Set<Position> {
         let distance = position.distance(to: closestBeacon)
-        let candidates = [-distance, distance].flatMap { xDiff in 
-            [-distance, distance].map { yDiff in 
+        let candidates = [-distance, distance].flatMap { xDiff in
+            [-distance, distance].map { yDiff in
                 Position(x: position.x + xDiff, y: position.y + yDiff)
             }
         }
         return Set(candidates)
     }
-    
+
     func coverage(at row: Int) -> ClosedRange<Int>? {
-        let yDistance = abs(position.y - row) 
+        let yDistance = abs(position.y - row)
         guard yDistance <= distance else { return nil }
         let coverageWidth = distance - yDistance
         return (position.x - coverageWidth)...(position.x + coverageWidth)
     }
-    
+
     func covers(_ other: Position) -> Bool {
         return position.distance(to: other) <= distance
     }
-    
+
     var debugDescription: String {
         "Sensor at: \(position), closest beacon at: \(closestBeacon)"
     }
-    
+
     static func create(input: String) -> [Self] {
         return Array(
             input
@@ -83,7 +83,7 @@ private struct Sensor: CustomDebugStringConvertible {
                     }
                     .map { Int($0)! }
                     return Sensor(
-                        position: Position(x: parts[0], y: parts[1]), 
+                        position: Position(x: parts[0], y: parts[1]),
                         closestBeacon: Position(x: parts[2], y: parts[3])
                     )
                 }
@@ -97,18 +97,18 @@ extension Array where Element == ClosedRange<Int> {
         for range in self.sorted(by: { $0.lowerBound < $1.lowerBound }) {
             if let last = result.last {
                 if last.contains(range.lowerBound - 1) || last.overlaps(range) {
-                    result.popLast()
+                    _ = result.popLast()
                     result.append(
                         (Swift.min(last.lowerBound, range.lowerBound))...Swift.max(last.upperBound, range.upperBound)
                     )
                 } else {
                     result.append(range)
                 }
-                
+
             } else {
                 result.append(range)
             }
-            
+
         }
         return result
     }
