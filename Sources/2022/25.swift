@@ -1,4 +1,5 @@
 import Foundation
+import Shared
 
 public func day25() {
     print(part1(input: input))

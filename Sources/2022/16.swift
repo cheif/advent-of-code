@@ -1,3 +1,5 @@
+import Shared
+
 public func day16() {
     // 1577 is too low
 //    print(part1(input: input))
@@ -235,12 +237,12 @@ private func aStar(
 private extension Graph where T == Valve {
     init(valves: [Valve], start: Valve) {
         let valvesWithFlow = valves.filter { $0.flowRate > 0 || $0 == start }
-        self.edges = valvesWithFlow.flatMap { from in
+        self.init(edges: valvesWithFlow.flatMap { from in
             valvesWithFlow.filter { $0 != from }.map { to in
                 let shortestPath = aStar(start: from, end: to, valves: valves)
                 return Edge(from: from, to: to, weight: shortestPath!.count - 1)
             }
-        }
+        })
     }
 }
 

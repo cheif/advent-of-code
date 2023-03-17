@@ -1,3 +1,5 @@
+import Shared
+
 public func day23() {
 //    print(part1(input: input))
     print(part2(input: input))

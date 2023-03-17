@@ -1,16 +1,16 @@
 import Foundation
 
-func zip3<A, B, C>(_ a: some Sequence<A>, _ b: some Sequence<B>, _ c: some Sequence<C>) -> some Sequence<(A, B, C)> {
+public func zip3<A, B, C>(_ a: some Sequence<A>, _ b: some Sequence<B>, _ c: some Sequence<C>) -> some Sequence<(A, B, C)> {
     zip(zip(a, b), c).map { aAndB, c in (aAndB.0, aAndB.1, c) }
 }
 
-extension Collection where Element: Numeric {
+public extension Collection where Element: Numeric {
     var sum: Element {
         reduce(0, +)
     }
 }
 
-extension Collection {
+public extension Collection {
     func chunked(into size: Int) -> [[Element]] {
         var result: [[Element]] = []
         for element in self {
@@ -25,7 +25,7 @@ extension Collection {
     }
 }
 
-extension ClosedRange {
+public extension ClosedRange {
     func fullyContains(_ other: ClosedRange) -> Bool {
         lowerBound <= other.lowerBound && upperBound >= other.upperBound
     }
@@ -39,17 +39,17 @@ extension ClosedRange {
     }
 }
 
-struct Grid<V>: Hashable where V: Equatable, V: Hashable {
-    let data: Set<Point>
-    let xRange: ClosedRange<Int>
-    let yRange: ClosedRange<Int>
-    let positions: Set<Position>
+public struct Grid<V>: Hashable where V: Equatable, V: Hashable {
+    public let data: Set<Point>
+    public let xRange: ClosedRange<Int>
+    public let yRange: ClosedRange<Int>
+    public let positions: Set<Position>
 
-    func hash(into hasher: inout Hasher) {
+    public func hash(into hasher: inout Hasher) {
         hasher.combine(positions)
     }
 
-    init(data: Set<Point>) {
+    public init(data: Set<Point>) {
         self.data = data
         self.xRange = data.map(\.x).range()
         self.yRange = data.map(\.y).range()
@@ -57,17 +57,23 @@ struct Grid<V>: Hashable where V: Equatable, V: Hashable {
     }
 
 
-    struct Point: Equatable, Hashable, CustomDebugStringConvertible {
-        let x: Int
-        let y: Int
-        let val: V
+    public struct Point: Equatable, Hashable, CustomDebugStringConvertible {
+        public let x: Int
+        public let y: Int
+        public let val: V
 
-        var debugDescription: String {
+        public init(x: Int, y: Int, val: V) {
+            self.x = x
+            self.y = y
+            self.val = val
+        }
+
+        public var debugDescription: String {
             "Point(x: \(x), y: \(y), val: \(val))"
         }
     }
 
-    func adjacent(to point: Point) -> [Direction: [Point]] {
+    public func adjacent(to point: Point) -> [Direction: [Point]] {
         let all = data.filter { $0.x == point.x || $0.y == point.y }
         return [
             .up: all.filter { $0.y < point.y }.sorted(by: { $0.y > $1.y }),
@@ -78,7 +84,7 @@ struct Grid<V>: Hashable where V: Equatable, V: Hashable {
     }
 }
 
-extension Grid {
+public extension Grid {
     init(string: String) where V == Int {
         let lines = string
             .split(whereSeparator: \.isNewline)
@@ -105,17 +111,17 @@ extension Grid {
 
 }
 
-extension Grid.Point {
+public extension Grid.Point {
     func distance(to other: Self) -> Int {
         return abs(other.x - self.x) + abs(other.y - self.y)
     }
 }
 
-enum Direction: Int, CaseIterable {
+public enum Direction: Int, CaseIterable {
     case right, down, left, up
 }
 
-extension Direction {
+public extension Direction {
     init?(from character: Character) {
         let map: [Character: Self] = [
             ">": .right,
@@ -139,26 +145,31 @@ extension Direction {
     }
 }
 
-extension Int {
+public extension Int {
     func times<T>(_ e: T) -> [T] {
         (0..<self).map { _ in e }
     }
 }
 
-struct Position: CustomStringConvertible, Hashable, Comparable {
-    let x: Int
-    let y: Int
+public struct Position: CustomStringConvertible, Hashable, Comparable {
+    public let x: Int
+    public let y: Int
 
-    var description: String {
+    public init(x: Int, y: Int) {
+        self.x = x
+        self.y = y
+    }
+
+    public var description: String {
         "Position(x: \(x), y: \(y))"
     }
 
-    static func < (lhs: Self, rhs: Self) -> Bool {
+    public static func < (lhs: Self, rhs: Self) -> Bool {
         lhs.x <= rhs.x && lhs.y <= rhs.y
     }
 }
 
-extension Position {
+public extension Position {
     func distance(to other: Self) -> Int {
         return abs(other.x - self.x) + abs(other.y - self.y)
     }
@@ -181,17 +192,23 @@ struct Grid2D {
     let positions: [Position]
 }
 
-struct Point3D: CustomDebugStringConvertible, Hashable {
-    let x: Int
-    let y: Int
-    let z: Int
+public struct Point3D: CustomDebugStringConvertible, Hashable {
+    public let x: Int
+    public let y: Int
+    public let z: Int
 
-    var debugDescription: String {
+    public init(x: Int, y: Int, z: Int) {
+        self.x = x
+        self.y = y
+        self.z = z
+    }
+
+    public var debugDescription: String {
         "Point3D(x: \(x), y: \(y), z: \(z))"
     }
 }
 
-extension Point3D {
+public extension Point3D {
     init(string: Substring) {
         let parts = string.split(separator: ",")
         self.init(
@@ -206,15 +223,19 @@ extension Point3D {
     }
 }
 
-struct Grid3D: Equatable {
-    let points: [Point3D]
+public struct Grid3D: Equatable {
+    public let points: [Point3D]
 
-    func neighbours(to point: Point3D) -> [Point3D] {
+    public init(points: [Point3D]) {
+        self.points = points
+    }
+
+    public func neighbours(to point: Point3D) -> [Point3D] {
         points.filter { $0.distance(to: point) == 1 }
     }
 }
 
-func plot(_ points: [(position: Position, symbol: String)]) {
+public func plot(_ points: [(position: Position, symbol: String)]) {
     let allPositions = points.map(\.position)
     let xRange = allPositions.map(\.x).range()
     let yRange = allPositions.map(\.y).range()
@@ -231,12 +252,13 @@ func plot(_ points: [(position: Position, symbol: String)]) {
     print(description)
 }
 
-extension Grid {
+public extension Grid {
     func removeAll(where remove: (Point) -> Bool) -> Grid {
         Grid(data: data.filter { !remove($0) })
     }
 }
-extension Grid.Point {
+
+public extension Grid.Point {
     var position: Position {
         Position(x: x, y: y)
     }
@@ -251,18 +273,18 @@ extension Grid.Point {
     }
 }
 
-func plot(_ grid: Grid<Character>, extra: [(position: Position, symbol: String)] = []) {
+public func plot(_ grid: Grid<Character>, extra: [(position: Position, symbol: String)] = []) {
     let points = grid.data.map { point in (Position(x: point.x, y: point.y), String(point.val)) }
     plot(points + extra)
 }
 
-extension Collection where Element == Int {
+public extension Collection where Element == Int {
     func range() -> ClosedRange<Int> {
         (self.min()!)...(self.max()!)
     }
 }
 
-extension RangeReplaceableCollection {
+public extension RangeReplaceableCollection {
     @discardableResult
     mutating func shift() -> Element {
         let element = removeFirst()
@@ -271,7 +293,7 @@ extension RangeReplaceableCollection {
     }
 }
 
-func maximizeIterative<State: Hashable>(
+public func maximizeIterative<State: Hashable>(
     _ current: State,
     finished: @escaping (State) -> Bool,
     score: @escaping (State) -> Int,
@@ -308,7 +330,7 @@ func maximizeIterative<State: Hashable>(
     return [bestCandidate!.state]
 }
 
-func maximizeRecursive<State: Hashable>(
+public func maximizeRecursive<State: Hashable>(
     _ current: State,
     finished: @escaping (State) -> Bool,
     score: @escaping (State) -> Int,
@@ -336,20 +358,30 @@ func maximizeRecursive<State: Hashable>(
     return res
 }
 
-struct Graph<T> {
-    struct Edge: CustomDebugStringConvertible {
-        let from: T
-        let to: T
-        let weight: Int
+public struct Graph<T> {
+    public struct Edge: CustomDebugStringConvertible {
+        public let from: T
+        public let to: T
+        public let weight: Int
 
-        var debugDescription: String {
+        public init(from: T, to: T, weight: Int) {
+            self.from = from
+            self.to = to
+            self.weight = weight
+        }
+
+        public var debugDescription: String {
             return "\(from) - [\(weight)] -> \(to)"
         }
     }
-    let edges: [Edge]
+    public let edges: [Edge]
+
+    public init(edges: [Edge]) {
+        self.edges = edges
+    }
 }
 
-func measure<T>(_ name: String? = nil, file: String = #file, line: Int = #line, block: () -> T) -> T {
+public func measure<T>(_ name: String? = nil, file: String = #file, line: Int = #line, block: () -> T) -> T {
     var res: T!
     let duration = ContinuousClock().measure {
         res = block()

@@ -1,12 +1,14 @@
+import Shared
+
 public func day2() {
 //    print(part1(input: input))
     print(part2(input: input))
 }
 
 private func part1(input: String) -> Int {
-    let rounds = input.split(whereSeparator: \.isNewline).map { 
+    let rounds = input.split(whereSeparator: \.isNewline).map {
         $0.compactMap(\.asciiValue).map(Int.init).map { $0 - 64}
-    }.map { 
+    }.map {
         ($0[0], $0[2]-23)
     }
     let scores = rounds.map { theirs, mine in
@@ -26,12 +28,12 @@ private func part1(input: String) -> Int {
 }
 
 private func part2(input: String) -> Int {
-    let rounds = input.split(whereSeparator: \.isNewline).map { 
+    let rounds = input.split(whereSeparator: \.isNewline).map {
         $0.compactMap(\.asciiValue).map(Int.init).map { $0 - 64}
-    }.map { 
+    }.map {
         ($0[0], $0[2]-25)
     }
-    let scores = rounds.map { theirs, result in 
+    let scores = rounds.map { theirs, result in
         let score = result * 3 + 3
         let mine = (theirs + 2 + result) % 3 + 1
         return score + mine

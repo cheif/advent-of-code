@@ -1,3 +1,5 @@
+import Shared
+
 public func day20() {
 //    print(part1(input: input))
     print(part2(input: input))
@@ -24,8 +26,8 @@ private func part2(input: String) -> Int {
         .map { $0 * decrytionKey }
         .enumerated()
         .map { id, number in Number(number: number, id: id) }
-    
-    let result = (0..<10).reduce(numbers) { numbers, _ in 
+
+    let result = (0..<10).reduce(numbers) { numbers, _ in
         let mixed = mix(numbers: numbers)
         print(mixed)
         return mixed
@@ -44,9 +46,9 @@ private func mix(numbers: [Number]) -> [Number] {
         let newIndex = result.wrappedIndex(index, offsetBy: number.number)
 //        print("Moving: \(toMove)")
 //        print("newIndex: \(newIndex)")
-        
+
         result.insert(toMove, at: newIndex)
-        
+
 //        print(result)
     }
     return result
@@ -61,7 +63,7 @@ private extension Collection {
 private struct Number: Identifiable, CustomDebugStringConvertible {
     let number: Int
     let id: Int
-    
+
     var debugDescription: String {
         "\(number)"
     }

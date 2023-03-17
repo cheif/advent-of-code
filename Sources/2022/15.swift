@@ -1,3 +1,5 @@
+import Shared
+
 public func day15() {
 //    print(part1(input: test, row: 10))
 //    print(part1(input: input, row: 2_000_000))

@@ -1,3 +1,5 @@
+import Shared
+
 public func day4() {
 //    print(part1(input: input))
     print(part2(input: input))
@@ -13,7 +15,7 @@ private func part1(input: String) -> Int {
 
 private func part2(input: String) -> Int {
     let pairs = getPairs(input: input)
-    let overlaps = pairs.filter { lhs, rhs in 
+    let overlaps = pairs.filter { lhs, rhs in
         lhs.overlaps(rhs)
     }
     return overlaps.count
@@ -23,7 +25,7 @@ private func getPairs(input: String) -> [(ClosedRange<Int>, ClosedRange<Int>)] {
      input.split(whereSeparator: \.isNewline)
         .map { $0
             .split(separator: ",")
-            .map { 
+            .map {
                 let range = $0.split(separator: "-")
                 return Int(range[0])!...Int(range[1])!
             }

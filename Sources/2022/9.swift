@@ -1,3 +1,5 @@
+import Shared
+
 public func day9() {
 //    print(part1(input: input))
     print(part2(input: input))
@@ -55,11 +57,11 @@ private extension Position {
         case .right: return Self(x: x+1, y: y)
         }
     }
-    
+
     private func touches(other: Self) -> Bool {
         abs(self.x - other.x) <= 1 && abs(self.y - other.y) <= 1
     }
-    
+
     func moves(towards other: Self) -> [Direction] {
         if touches(other: other) {
             return []
@@ -79,13 +81,13 @@ private extension Position {
             }
             return moves
         }
-    }    
+    }
 }
 
 private func parseMoves(_ input: String) -> [Direction] {
     input
         .split(whereSeparator: \.isNewline)
-        .flatMap { line in 
+        .flatMap { line in
             let parts = line.split(whereSeparator: \.isWhitespace)
             let dir: Direction
             switch parts[0] {
@@ -95,7 +97,7 @@ private func parseMoves(_ input: String) -> [Direction] {
             case "R": dir = .right
             default: fatalError("Can't map \(parts[0])")
             }
-            
+
             let count = Int(parts[1])!
             return count.times(dir)
         }

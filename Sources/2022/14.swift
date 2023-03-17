@@ -1,3 +1,5 @@
+import Shared
+
 public func day14() {
 //    print(part1(input: input))
     // 25218 is too low

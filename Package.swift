@@ -10,7 +10,9 @@ let package = Package(
     ],
     targets: [
         .executableTarget(
-            name: "advent-of-code",
-            dependencies: [])
+            name: "2022",
+            dependencies: ["Shared"]
+            ),
+        .target(name: "Shared"),
     ]
 )

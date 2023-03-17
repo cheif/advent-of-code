@@ -1,3 +1,5 @@
+import Shared
+
 public func day11() {
 //    print(part1(input: input))
     print(part2(input: input))
@@ -20,7 +22,7 @@ private func simulateRound(start: [Monkey]) -> [Monkey] {
     var monkeys: [Monkey] = start
     for index in monkeys.indices {
         let monkey = monkeys[index]
-        monkey.items.forEach { item in 
+        monkey.items.forEach { item in
             let new = Int((Double(monkey.operation(item)) / 3.0).rounded(.down))
             let to = monkey.throwTo(new)
             let toIndex = monkeys.firstIndex(where: { $0.id == to })!
@@ -37,7 +39,7 @@ private func simulateRoundPart2(start: [Monkey]) -> [Monkey] {
     let upperBound = monkeys.map(\.divisor).reduce(1, *)
     for index in monkeys.indices {
         let monkey = monkeys[index]
-        monkey.items.forEach { item in 
+        monkey.items.forEach { item in
             let new = monkey.operation(item) % upperBound
             let to = monkey.throwTo(new)
             let toIndex = monkeys.firstIndex(where: { $0.id == to })!
@@ -57,11 +59,11 @@ private struct Monkey: CustomDebugStringConvertible {
     let divisor: Int
     let trueMonkey: Int
     let falseMonkey: Int
-    
+
     func throwTo(_ worry: Int) -> Int {
         worry % divisor == 0 ? trueMonkey : falseMonkey
     }
-    
+
     var debugDescription: String {
         "Monkey \(id): \(items)"
     }
@@ -69,7 +71,7 @@ private struct Monkey: CustomDebugStringConvertible {
 
 private func parse(_ input: String) -> [Monkey] {
     let groups = input.split(separator: "\n\n")
-    return groups.map { input in 
+    return groups.map { input in
         let lines = input.split(whereSeparator: \.isNewline)
         let id = Int(lines[0].dropFirst(7).dropLast())!
         let items = lines[1].split(separator: ": ")[1].split(separator: ", ").map(String.init).compactMap(Int.init)
@@ -92,8 +94,8 @@ private func parse(_ input: String) -> [Monkey] {
         let trueMonkey = Int(lines[4].split(separator: "monkey ")[1])!
         let falseMonkey = Int(lines[5].split(separator: "monkey ")[1])!
         return Monkey(
-            id: id, 
-            items: items, 
+            id: id,
+            items: items,
             operation: operation,
             divisor: divisor,
             trueMonkey: trueMonkey,
