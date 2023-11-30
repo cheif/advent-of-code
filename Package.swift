@@ -13,13 +13,19 @@ let package = Package(
             name: "AdventOfCode",
             dependencies: [
                 "Shared",
-                "AOC2022"
+                "AOC2022",
+                "AOC2023",
             ]
         ),
         .target(
             name: "AOC2022",
             dependencies: ["Shared"],
             path: "Sources/2022"
+        ),
+        .target(
+            name: "AOC2023",
+            dependencies: ["Shared"],
+            path: "Sources/2023"
         ),
         .target(name: "Shared"),
         .testTarget(
