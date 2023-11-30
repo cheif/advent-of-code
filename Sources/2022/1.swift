@@ -1,41 +1,36 @@
 import Shared
 
-public func day1() {
-    print(part1(input: input))
-    print(part2(input: input))
-}
+public let day1 = Solution (
+    part1: { input in
+        let elves = input.split(separator: "\n\n").map { $0.split(whereSeparator: \.isNewline).map { Int($0.trimmingPrefix(while: \.isWhitespace))! }}
+        let calories = elves.map(\.sum)
+        return calories.max()!
+    },
+    part2: { input in
+        let elves = input.split(separator: "\n\n").map { $0.split(whereSeparator: \.isNewline).map { Int($0.trimmingPrefix(while: \.isWhitespace))! }}
+        let calories = elves.map(\.sum)
+        let top3 = calories.sorted().suffix(3)
+        return top3.sum
+    },
+    testResult: (24000,45000),
+    testInput: """
+1000
+2000
+3000
 
-private func part1(input: String) -> Int {
-    let elves = input.split(separator: "\n\n").map { $0.split(whereSeparator: \.isNewline).map { Int($0.trimmingPrefix(while: \.isWhitespace))! }}
-    let calories = elves.map(\.sum)
-    return calories.max()!
-}
+4000
 
-private func part2(input: String) -> Int {
-    let elves = input.split(separator: "\n\n").map { $0.split(whereSeparator: \.isNewline).map { Int($0.trimmingPrefix(while: \.isWhitespace))! }}
-    let calories = elves.map(\.sum)
-    let top3 = calories.sorted().suffix(3)
-    return top3.sum
-}
+5000
+6000
 
-private let test = """
-    1000
-    2000
-    3000
+7000
+8000
+9000
 
-    4000
+10000
+""",
 
-    5000
-    6000
-
-    7000
-    8000
-    9000
-
-    10000
-"""
-
-private let input = """
+    input: """
 9524
 12618
 6755
@@ -2291,3 +2286,4 @@ private let input = """
 5721
 6630
 """
+)

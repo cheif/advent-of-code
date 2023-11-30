@@ -10,8 +10,9 @@ let package = Package(
     ],
     targets: [
         .executableTarget(
-            name: "advent-of-code",
+            name: "AdventOfCode",
             dependencies: [
+                "Shared",
                 "AOC2022"
             ]
         ),
@@ -21,5 +22,11 @@ let package = Package(
             path: "Sources/2022"
         ),
         .target(name: "Shared"),
+        .testTarget(
+            name: "AdventOfCodeTests",
+            dependencies: [
+                "AdventOfCode"
+            ]
+        )
     ]
 )

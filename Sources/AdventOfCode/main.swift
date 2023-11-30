@@ -1,4 +1,5 @@
 import Foundation
+import Shared
 import AOC2022
 
 // FIXME: Use UTC calendar?
@@ -8,16 +9,18 @@ let day: Int = CommandLine.arguments.dropFirst(2).first.flatMap { Int($0) } ?? C
 guard let solution = solution(year: year, day: day) else {
     fatalError("No solution for \(year)-\(day)")
 }
-print("Running solution for \(year)\\(day)")
+print("Running solution for \(year)-\(day)")
 let duration = ContinuousClock().measure {
-    solution()
+    print("part 1: \(solution.part1(input: solution.input))")
+    print("part 2: \(solution.part2(input: solution.input))")
 }
 
 print("Took: \(duration)")
 
-private func solution(year: Int, day: Int) -> (() -> Void)? {
+public func solution(year: Int, day: Int) -> (any SolutionProtocol)? {
     switch (year, day) {
     case (2022, 1): return AOC2022.day1
+        /*
     case (2022, 2): return AOC2022.day2
     case (2022, 3): return AOC2022.day3
     case (2022, 4): return AOC2022.day4
@@ -42,6 +45,7 @@ private func solution(year: Int, day: Int) -> (() -> Void)? {
     case (2022, 23): return AOC2022.day23
     case (2022, 24): return AOC2022.day24
     case (2022, 25): return AOC2022.day25
+         */
     default: return nil
     }
 }
