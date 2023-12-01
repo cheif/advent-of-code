@@ -67,6 +67,7 @@ struct LegacySolution: SolutionProtocol {
     }
 
     let testInput = ""
+    let part2TestInput: String? = nil
     let testResult = (0, 0)
     let input = ""
 
