@@ -108,7 +108,6 @@ public extension Grid {
             }
         )
     }
-
 }
 
 public extension Grid.Point {
