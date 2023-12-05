@@ -1,13 +1,16 @@
 import Foundation
 import Shared
 
-func getMaps(lines: ArraySlice<String.SubSequence>) -> [[(dest: Int, source: Int, length: Int, range: Range<Int>)]] {
+func getMaps(lines: ArraySlice<String.SubSequence>) -> [[(range: Range<Int>, offset: Int)]] {
     return lines.map { line in
         return line.split(whereSeparator: \.isNewline)
             .dropFirst()
             .map { parts in
                 let components = parts.split(whereSeparator: \.isWhitespace).map { Int(String($0))!}
-                return (dest: components[0], source: components[1], length: components[2], range: Range(uncheckedBounds: (components[1], components[1] + components[2])))
+                return (
+                    range: Range(uncheckedBounds: (components[1], components[1] + components[2])),
+                    offset: components[0] - components[1]
+                )
             }
     }
 }
@@ -22,7 +25,7 @@ public let day5 = Solution(
             mapped = mapped.map { num in
                 for mapping in map {
                     if mapping.range.contains(num) {
-                        return num + mapping.dest - mapping.source
+                        return num + mapping.offset
                     }
                 }
                 return num
@@ -40,33 +43,12 @@ public let day5 = Solution(
         var mapped = seeds
         for map in maps {
             mapped = mapped.flatMap { range -> [Range<Int>] in
-                let overlaps = map.compactMap { mapping in
-                    return mapping.range.clamped(to: range)
+                let overlapsAndOffsets = map.compactMap { mapping in (mapping.range.clamped(to: range), mapping.offset) }
+                var ranges = overlapsAndOffsets.map { overlap, offset in
+                    overlap.offset(by: offset)
                 }
-                var ranges = map.compactMap { mapping in
-                    let offset = mapping.dest - mapping.source
-                    let overlap = mapping.range.clamped(to: range)
-                    if !overlap.isEmpty {
-                        return Range(uncheckedBounds: (overlap.lowerBound + offset, overlap.upperBound + offset))
-                    } else {
-                        return nil
-                    }
-                }
-                var noOverlaps: [Range<Int>] = [range]
-                for overlap in overlaps {
-                    noOverlaps = noOverlaps.flatMap { range -> [Range<Int>] in
-                        let inner = overlap.clamped(to: range)
-                        if inner.isEmpty {
-                            return [range]
-                        } else {
-                            return [
-                                Range(uncheckedBounds: (range.lowerBound, inner.lowerBound)),
-                                Range(uncheckedBounds: (inner.upperBound, range.upperBound))
-                            ]
-
-                        }
-                    }
-
+                let noOverlaps = overlapsAndOffsets.map(\.0).reduce([range]) { acc, overlap in
+                    acc.flatMap { range in range.difference(from: overlap) }
                 }
                 let result = (ranges + noOverlaps).filter { !$0.isEmpty }
                 assert(range.count == result.map(\.count).sum)

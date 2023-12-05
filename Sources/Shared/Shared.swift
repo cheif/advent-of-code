@@ -29,13 +29,40 @@ public extension ClosedRange {
     func fullyContains(_ other: ClosedRange) -> Bool {
         lowerBound <= other.lowerBound && upperBound >= other.upperBound
     }
+}
 
-    func expanded(by size: Bound) -> Self where Bound: Numeric {
+public extension ClosedRange where Bound: Numeric {
+    func expanded(by size: Bound) -> Self {
         Self(uncheckedBounds: (lowerBound - size, upperBound + size))
     }
 
-    func shrinked(by size: Bound) -> Self where Bound: Numeric {
+    func shrinked(by size: Bound) -> Self {
         Self(uncheckedBounds: (lowerBound + size, upperBound - size))
+    }
+}
+
+public extension Range where Bound: Numeric {
+    /// Offsets a range by moving lower + upper bound by specified offset
+    func offset(by offset: Bound) -> Self {
+        Self(uncheckedBounds: (lowerBound + offset, upperBound + offset))
+    }
+
+    /// Returns the range(s) that result from removing ``other`` from ``self``, should return one or two ranges
+    func difference(from other: Self) -> [Self] {
+        let inner = self.clamped(to: other)
+        if inner.isEmpty {
+            return [self]
+        } else {
+            // Return two ranges, one before the overlap, and one after
+            return [
+                Range(uncheckedBounds: (self.lowerBound, inner.lowerBound)),
+                Range(uncheckedBounds: (inner.upperBound, self.upperBound))
+            ]
+                .filter {
+                    // A lot of cases will result in empty ranges, get rid of these
+                    !$0.isEmpty
+                }
+        }
     }
 }
 
