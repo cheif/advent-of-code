@@ -1,7 +1,7 @@
 import Foundation
 import Shared
 
-func parse(input: String) -> [(Int, Int)] {
+private func parse(input: String) -> [(Int, Int)] {
     let split = input.split(whereSeparator: \.isNewline)
         .map { $0.split(whereSeparator: \.isWhitespace).dropFirst().map { Int($0)! }}
     return Array(zip(split[0], split[1]))
