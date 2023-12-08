@@ -416,3 +416,29 @@ public func measure<T>(_ name: String? = nil, file: String = #file, line: Int = 
     print("\(marker) took \(duration)")
     return res
 }
+
+/// Returns the Greatest Common Divisor of two numbers.
+public func gcd(_ x: Int, _ y: Int) -> Int {
+    var a = 0
+    var b = max(x, y)
+    var r = min(x, y)
+
+    while r != 0 {
+        a = b
+        b = r
+        r = a % b
+    }
+    return b
+}
+
+/// Returns the least common multiple of two numbers.
+public func lcm(_ x: Int, _ y: Int) -> Int {
+    return x / gcd(x, y) * y
+}
+
+extension Collection where Element == Int {
+    /// Returns the least common multiple of all numbers in this collection
+    public func leastCommonMultiple() -> Element {
+        self.reduce(1, lcm)
+    }
+}
