@@ -164,9 +164,7 @@ public let day10 = Solution(
                     .filter { !path.contains($0) }
             }
             let count = expanded.count
-            for point in new {
-                expanded.insert(point)
-            }
+            expanded.formUnion(new)
             if count == expanded.count {
                 break
             }
