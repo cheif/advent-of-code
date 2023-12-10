@@ -71,6 +71,7 @@ public struct Grid<V>: Hashable where V: Equatable, V: Hashable {
     public let xRange: ClosedRange<Int>
     public let yRange: ClosedRange<Int>
     public let positions: Set<Position>
+    public let points: [Position: Point]
 
     public func hash(into hasher: inout Hasher) {
         hasher.combine(positions)
@@ -81,6 +82,7 @@ public struct Grid<V>: Hashable where V: Equatable, V: Hashable {
         self.xRange = data.map(\.x).range()
         self.yRange = data.map(\.y).range()
         self.positions = Set(data.map(\.position))
+        self.points = Dictionary(data.map { ($0.position, $0) }, uniquingKeysWith: { lhs, _ in lhs })
     }
 
 
@@ -108,6 +110,19 @@ public struct Grid<V>: Hashable where V: Equatable, V: Hashable {
             .left: all.filter { $0.x < point.x }.sorted(by: { $0.x > $1.x }),
             .right: all.filter { $0.x > point.x }.sorted(by: { $0.x <  $1.x }),
         ]
+    }
+
+    /// Return the closes neighbour to a point, keyed on the direction from the original point
+    public func neighbours(to point: Point) -> [Direction: Point] {
+        let candidates: [Direction: Position] = [
+            .left: Position(x: point.x - 1, y: point.y),
+            .right: Position(x: point.x + 1, y: point.y),
+            .up: Position(x: point.x, y: point.y - 1),
+            .down: Position(x: point.x, y: point.y + 1)
+        ]
+        return candidates.compactMapValues { position in
+            self.points[position]
+        }
     }
 }
 
