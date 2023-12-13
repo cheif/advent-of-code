@@ -1,70 +1,44 @@
 import Foundation
 import Shared
 
-private func findVerticalMirrors(grid: Grid<Character>) -> [Int] {
-    var reflections: [Int] = []
+private func findVerticalMirrors(grid: Grid<Character>) -> [Int: Int] {
+    var result: [Int: Int] = [:]
     for col in grid.xRange {
         let len = min(col, grid.xRange.upperBound - col + 1)
         guard len != 0 else {
             continue
         }
-        let isMirrored = (0..<len).allSatisfy { offset in
-            return grid.yRange.allSatisfy { y in
+        let diff = (0..<len).flatMap { offset in
+            return grid.yRange.map { y in
                 grid.points[Position(x: col-offset-1, y: y)]?.val == grid.points[Position(x: col+offset, y: y)]?.val
-            }
-        }
-        if isMirrored {
-            reflections.append(col)
-        }
+            }.map { $0 ? 0 : 1}
+        }.sum
+        result[col] = diff
     }
-    return reflections
+    return result
 }
 
-private func findHorizontalMirrors(grid: Grid<Character>) -> [Int] {
-    var reflections: [Int] = []
+private func findHorizontalMirrors(grid: Grid<Character>) -> [Int: Int] {
+    var result: [Int: Int] = [:]
     for row in grid.yRange {
         let len = min(row, grid.yRange.upperBound - row + 1)
         guard len != 0 else {
             continue
         }
-        let isMirrored = (0..<len).allSatisfy { offset in
-            return grid.xRange.allSatisfy { x in
+        let diff = (0..<len).flatMap { offset in
+            return grid.xRange.map { x in
                 grid.points[Position(x: x, y: row-offset-1)]?.val == grid.points[Position(x: x, y: row+offset)]?.val
-            }
-        }
-        if isMirrored {
-            reflections.append(row)
-        }
+            }.map { $0 ? 0 : 1 }
+        }.sum
+        result[row] = diff
     }
-    return reflections
+    return result
 }
 
-private func reflections(grid: Grid<Character>) -> [Int] {
-    findVerticalMirrors(grid: grid) + findHorizontalMirrors(grid: grid).map { $0 * 100 }
-}
-
-private func reflection(grid: Grid<Character>) -> Int {
-    reflections(grid: grid).sum
-}
-
-private func fixedReflection(grid: Grid<Character>) -> Int {
-    let original = reflection(grid: grid)
-    let positions = grid.xRange.flatMap { x in grid.yRange.map { y in Position(x: x, y: y) }}
-    for position in positions {
-        let new = Grid(data: grid.data.map { point in
-            if point.position == position {
-                return Grid<Character>.Point(x: point.x, y: point.y, val: point.val == "#" ? "." : "#")
-            } else {
-                return point
-            }
-        })
-        let reflections = reflections(grid: new)
-        let newReflection = reflections.first(where: { $0 != original })
-        if let newReflection {
-            return newReflection
-        }
-    }
-    fatalError("None found")
+private func reflection(grid: Grid<Character>, validDiff: Int) -> Int {
+    let validMirrors = findVerticalMirrors(grid: grid).filter { $0.value == validDiff }.map(\.key) +
+    findHorizontalMirrors(grid: grid).filter { $0.value == validDiff }.map(\.key).map { $0 * 100 }
+    return validMirrors.sum
 }
 
 public let day13 = Solution(
@@ -73,7 +47,7 @@ public let day13 = Solution(
             .map { sub in
                 Grid(lines: sub.split(whereSeparator: \.isNewline).map { $0.map { $0 } })
             }
-        return grids.compactMap(reflection(grid:)).sum
+        return grids.map { reflection(grid: $0, validDiff: 0) }.sum
     },
     part2: { input in
         let grids = input.split(separator: "\n\n")
@@ -81,7 +55,7 @@ public let day13 = Solution(
                 Grid(lines: sub.split(whereSeparator: \.isNewline).map { $0.map { $0 } })
             }
         // 22115 is not correct
-        return grids.compactMap(fixedReflection(grid:)).sum
+        return grids.map { reflection(grid: $0, validDiff: 1) }.sum
     },
     testResult: (405, 400),
     testInput: """
