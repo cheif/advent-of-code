@@ -206,7 +206,13 @@ public struct Position: CustomStringConvertible, Hashable, Comparable {
     }
 
     public static func < (lhs: Self, rhs: Self) -> Bool {
-        lhs.x <= rhs.x && lhs.y <= rhs.y
+        if lhs.x < rhs.x {
+            return true
+        } else if lhs.x > rhs.x {
+            return false
+        } else {
+            return lhs.y < rhs.y
+        }
     }
 }
 
