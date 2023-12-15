@@ -21,7 +21,6 @@ public let day15 = Solution(
         let boxes = steps.reductions(into: [Int:[String.SubSequence]]()) { boxes, step in
             let split = step.split(whereSeparator: { $0 == "=" || $0 == "-" })
             let id = HASH(string: split[0])
-            print("id", id, step)
             let contents = boxes[id] ?? []
             if step.hasSuffix("-") {
                 boxes[id] = contents.filter { !$0.hasPrefix(split[0]) }

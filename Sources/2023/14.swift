@@ -62,14 +62,9 @@ private func cycle(grid: Grid<Character>, cycles: Int) -> Grid<Character> {
     while currentCycle < cycles {
         grid = cycle(grid: grid)
         currentCycle += 1
-        if currentCycle % 10 == 0 {
-            print("Cycle: \(currentCycle)")
-        }
         if let firstSeen = solutions.firstIndex(of: grid) {
             let metaCycleLength = currentCycle - firstSeen
-            print("Found meta-cycle after: \(currentCycle), length: \(metaCycleLength)")
             let remaining = ((cycles - currentCycle) % metaCycleLength)
-            print("Remaining: \(remaining)")
             return cycle(grid: grid, cycles: remaining)
         }
         solutions.append(grid)
@@ -92,7 +87,6 @@ public let day14 = Solution(
         let grid = Grid(lines: input.split(whereSeparator: \.isNewline).map { $0.map { $0 }})
         let cycles = 1000000000
         let cycled = cycle(grid: grid, cycles: cycles)
-        plot(cycled)
         return load(grid: cycled)
     },
     testResult: (136, 64),
