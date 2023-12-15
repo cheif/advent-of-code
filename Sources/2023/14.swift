@@ -27,22 +27,13 @@ private func steps(grid: Grid<Character>, point: Grid<Character>.Point, directio
 }
 
 private func tilt(grid: Grid<Character>, direction: Direction) -> Grid<Character> {
-//    print("")
-//    print("Tilting: \(direction)")
-//    plot(grid)
-    var before = ContinuousClock().now
-    let moves =
-//    Dictionary(
-    grid.data
+    let moves = grid.data
         .filter { $0.val == "O" }
         .sorted(by: { $0.position < $1.position })
         .map { point in
             let steps = steps(grid: grid, point: point, direction: direction)
             return (from: point.position, to: point.position.move(in: direction, step: steps))
         }
-//    , uniquingKeysWith: { lhs, _ in lhs })
-//    print("Calculating moves took: \(ContinuousClock().now - before)")
-    before = ContinuousClock().now
 
     let toAdd = Set(moves.map(\.to))
     let toRemove = Set(moves.map(\.from)).subtracting(toAdd)
@@ -56,8 +47,6 @@ private func tilt(grid: Grid<Character>, direction: Direction) -> Grid<Character
         return Grid<Character>.Point(x: position.x, y: position.y, val: ".")
     }
 
-//    print("Moving points took: \(ContinuousClock().now - before)")
-    before = ContinuousClock().now
     let result = Grid(data: newData)
     return result
 }
@@ -97,7 +86,6 @@ public let day14 = Solution(
     part1: { input in
         let grid = Grid(lines: input.split(whereSeparator: \.isNewline).map { $0.map { $0 }})
         let tilted = tilt(grid: grid, direction: .up)
-//        plot(tilted)
         return load(grid: tilted)
     },
     part2: { input in
