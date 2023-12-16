@@ -461,3 +461,23 @@ extension Collection where Element == Int {
         self.reduce(1, lcm)
     }
 }
+
+/// Iteratively does an exhaustive search of all possibilities, until no new candidates are added.
+/// - Parameters:
+///   - initial: The initial set of candidates to start from
+///   - step: A block that takes a candidate, runs a transformation and then return a collection of new candidates (if there are any)
+/// - Returns: All candidates that were tested.
+public func exhaustiveSearch<Candidate: Hashable>(
+    initial: any Collection<Candidate>,
+    step: (Candidate) -> any Collection<Candidate>
+) -> Set<Candidate> {
+    var toTest = Set(initial)
+    var tested = Set<Candidate>()
+    while !toTest.isEmpty {
+        let candidate = toTest.removeFirst()
+        let next = step(candidate)
+        toTest.formUnion(next.filter { !tested.contains($0) })
+        tested.insert(candidate)
+    }
+    return tested
+}

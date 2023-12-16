@@ -14,8 +14,8 @@ private struct Beam: Hashable {
     }
 }
 
-private func step(grid: Grid<Character>, beams: [Beam]) -> [Beam] {
-    beams.flatMap { beam -> [Beam] in
+private func step(grid: Grid<Character>, beam: Beam) -> [Beam] {
+    [beam].flatMap { beam -> [Beam] in
         let current = grid.points[beam.position]!.val
         switch (current, beam.direction) {
         case (".", _), ("-", .left), ("-", .right), ("|", .up), ("|", .down):
@@ -38,23 +38,13 @@ private func step(grid: Grid<Character>, beams: [Beam]) -> [Beam] {
     }.filter { grid.positions.contains($0.position) }
 }
 
-private func getEnergization(grid: Grid<Character>, start: Beam) -> Set<Position> {
-    var toTest: [Beam] = [start]
-    var allBeams = Set<Beam>(toTest)
-    while !toTest.isEmpty {
-        let next = step(grid: grid, beams: toTest)
-        toTest = next.filter { !allBeams.contains($0) }
-        allBeams.formUnion(toTest)
-    }
-
-    return Set(allBeams.map(\.position))
-}
-
 public let day16 = Solution(
     part1: { input in
         let grid = Grid(string: input)
-        let energization = getEnergization(grid: grid, start: Beam(position: Position(x: 0, y: 0), direction: .right))
-        return energization.count
+        let allBeams = exhaustiveSearch(initial: [Beam(position: .init(x: 0, y: 0), direction: .right)]) { beam in
+            step(grid: grid, beam: beam)
+        }
+        return Set(allBeams.map(\.position)).count
     },
     part2: { input in
         let grid = Grid(string: input)
@@ -65,9 +55,16 @@ public let day16 = Solution(
             Beam(position: Position(x: 0, y: y), direction: .right),
             Beam(position: Position(x: grid.xRange.upperBound, y: y), direction: .left)
         ]}
-        let best = starts.map { ($0, getEnergization(grid: grid, start: $0)) }.max(by: { $0.1.count < $1.1.count })!
+        let best = starts
+            .map { start in
+                exhaustiveSearch(initial: [start]) { beam in
+                    step(grid: grid, beam: beam)
+                }
+            }
+            .map { Set($0.map(\.position)).count }
+            .max()!
         // 6988 is incorrect
-        return best.1.count
+        return best
     },
     testResult: (46, 51),
     testInput: #"""
