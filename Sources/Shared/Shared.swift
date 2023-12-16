@@ -127,10 +127,8 @@ public struct Grid<V>: Hashable where V: Equatable, V: Hashable {
 }
 
 public extension Grid {
-    init(string: String) where V == Int {
-        let lines = string
-            .split(whereSeparator: \.isNewline)
-            .map { $0.map { Int(String($0))! } }
+    init(string: String) where V == Character {
+        let lines = string.split(whereSeparator: \.isNewline).map { $0.map { $0 } }
         self.init(lines: lines)
     }
 

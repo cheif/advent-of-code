@@ -6,7 +6,7 @@ public func day8() {
 }
 
 private func part1(input: String) -> Int {
-    let grid = Grid<Int>(string: input)
+    let grid = Grid(lines: input.split(whereSeparator: \.isNewline).map { $0.map { Int(String($0))! }})
     let visible = grid.data.filter { point in
         let adjacent = grid.adjacent(to: point)
         return adjacent
@@ -18,7 +18,7 @@ private func part1(input: String) -> Int {
 }
 
 private func part2(input: String) -> Int {
-    let grid = Grid(string: input)
+    let grid = Grid(lines: input.split(whereSeparator: \.isNewline).map { $0.map { Int(String($0))! }})
     let scenicScores = grid.data.map { grid.scenicScore(for: $0) }
     return scenicScores.max()!
 }

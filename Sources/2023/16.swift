@@ -52,12 +52,12 @@ private func getEnergization(grid: Grid<Character>, start: Beam) -> Set<Position
 
 public let day16 = Solution(
     part1: { input in
-        let grid = Grid(lines: input.split(whereSeparator: \.isNewline).map { $0.map { $0 }})
+        let grid = Grid(string: input)
         let energization = getEnergization(grid: grid, start: Beam(position: Position(x: 0, y: 0), direction: .right))
         return energization.count
     },
     part2: { input in
-        let grid = Grid(lines: input.split(whereSeparator: \.isNewline).map { $0.map { $0 }})
+        let grid = Grid(string: input)
         let starts = grid.xRange.flatMap { x in [
             Beam(position: Position(x: x, y: 0), direction: .down),
             Beam(position: Position(x: x, y: grid.yRange.upperBound), direction: .up)
