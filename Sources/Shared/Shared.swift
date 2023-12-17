@@ -161,6 +161,23 @@ public enum Direction: Int, CaseIterable {
 }
 
 public extension Direction {
+    enum Rotation {
+        case left
+        case right
+    }
+
+    func rotate(_ rot: Rotation) -> Direction {
+        switch rot {
+        case .left:
+            Direction(rawValue: (self.rawValue + 4 - 1) % 4)!
+        case .right:
+            Direction(rawValue: (self.rawValue + 1) % 4)!
+        }
+    }
+}
+
+
+public extension Direction {
     init?(from character: Character) {
         let map: [Character: Self] = [
             ">": .right,
@@ -485,4 +502,56 @@ public func exhaustiveSearch<Candidate: Hashable>(
         tested.insert(candidate)
     }
     return tested
+}
+
+/// Do a a-star search to minimize cost going from `start` to `finished` == true
+/// - Parameters:
+///   - start: Initial state
+///   - finished: Closure to decide if this `State` satisfies being finished
+///   - estimatedCostToFinish: Underestimated cost to get to a finished state
+///   - candidates: Candidates that can be reached from this state
+/// - Returns: An ordered list of the optimal path from `start` to a finished state.
+public func aStar<State: Hashable>(
+    start: State,
+    finished: (State) -> Bool,
+    estimatedCostToFinish: (State) -> Int,
+    candidates: (State) -> [(State, cost: Int)]
+) -> [State]? {
+    var open = Set([start])
+    var cameFrom: [State: State] = [:]
+    var gScore: [State: Int] = [start: 0]
+    var fScore: [State: Int] = [start: estimatedCostToFinish(start)]
+
+    while !open.isEmpty {
+        let current = open.min(by: { fScore[$0]! < fScore[$1]! })!
+        open.remove(current)
+        if finished(current) {
+            return reconstructPath(cameFrom: cameFrom, current: current)
+        }
+        let candidates = candidates(current)
+        for (neighbour, cost) in candidates {
+            let tentativeGScore = gScore[current]! + cost
+            if let current = gScore[neighbour],
+               current <= tentativeGScore {
+                // Current is better, do nothing
+                continue
+            } else {
+                cameFrom[neighbour] = current
+                gScore[neighbour] = tentativeGScore
+                fScore[neighbour] = tentativeGScore + estimatedCostToFinish(neighbour)
+                open.insert(neighbour)
+            }
+        }
+    }
+    return nil
+}
+
+private func reconstructPath<State>(cameFrom: [State: State], current: State) -> [State] {
+    var current = current
+    var path = [current]
+    while cameFrom.keys.contains(current) {
+        current = cameFrom[current]!
+        path.insert(current, at: 0)
+    }
+    return path
 }

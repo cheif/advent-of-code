@@ -1,67 +1,6 @@
 import Foundation
 import Shared
 
-extension Direction {
-    enum Rotation {
-        case left
-        case right
-    }
-
-    func rotate(_ rot: Rotation) -> Direction {
-        switch rot {
-        case .left:
-            Direction(rawValue: (self.rawValue + 4 - 1) % 4)!
-        case .right:
-            Direction(rawValue: (self.rawValue + 1) % 4)!
-        }
-    }
-}
-
-private func reconstructPath<State>(cameFrom: [State: State], current: State) -> [State] {
-    var current = current
-    var path = [current]
-    while cameFrom.keys.contains(current) {
-        current = cameFrom[current]!
-        path.insert(current, at: 0)
-    }
-    return path
-}
-
-private func aStar<State: Hashable>(
-    start: State,
-    finished: (State) -> Bool,
-    h: (State) -> Int,
-    candidates: (State) -> [(State, cost: Int)]
-) -> [State]? {
-    var open = Set([start])
-    var cameFrom: [State: State] = [:]
-    var gScore: [State: Int] = [start: 0]
-    var fScore: [State: Int] = [start: h(start)]
-
-    while !open.isEmpty {
-        let current = open.min(by: { fScore[$0]! < fScore[$1]! })!
-        open.remove(current)
-        if finished(current) {
-            return reconstructPath(cameFrom: cameFrom, current: current)
-        }
-        let candidates = candidates(current)
-        for (neighbour, cost) in candidates {
-            let tentativeGScore = gScore[current]! + cost
-            if let current = gScore[neighbour],
-               current <= tentativeGScore {
-                // Current is better, do nothing
-                continue
-            } else {
-                cameFrom[neighbour] = current
-                gScore[neighbour] = tentativeGScore
-                fScore[neighbour] = tentativeGScore + h(neighbour)
-                open.insert(neighbour)
-            }
-        }
-    }
-    return nil
-}
-
 private struct State: Hashable {
     let position: Position
     let direction: Direction
@@ -75,7 +14,7 @@ public let day17 = Solution(
         let best: [State] = aStar(
             start: start,
             finished: { $0.position == end },
-            h: { $0.position.distance(to: end) },
+            estimatedCostToFinish: { $0.position.distance(to: end) },
             candidates: { state in
                 let positions = (1...3).compactMap { steps -> (Position, Int)? in
                     let position = state.position.move(in: state.direction, step: steps)
@@ -113,7 +52,7 @@ public let day17 = Solution(
         let best: [State] = aStar(
             start: start,
             finished: { $0.position == end },
-            h: { $0.position.distance(to: end) },
+            estimatedCostToFinish: { $0.position.distance(to: end) },
             candidates: { state in
                 let positions = (4...10).compactMap { steps -> (Position, Int)? in
                     let position = state.position.move(in: state.direction, step: steps)
