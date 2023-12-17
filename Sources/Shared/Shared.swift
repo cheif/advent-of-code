@@ -318,6 +318,11 @@ public extension Grid.Point {
     }
 }
 
+public func plot(_ grid: Grid<Int>, extra: [(position: Position, symbol: String)] = []) {
+    let points = grid.data.map { point in (Position(x: point.x, y: point.y), String(point.val)) }
+    plot(points + extra)
+}
+
 public func plot(_ grid: Grid<Character>, extra: [(position: Position, symbol: String)] = []) {
     let points = grid.data.map { point in (Position(x: point.x, y: point.y), String(point.val)) }
     plot(points + extra)
