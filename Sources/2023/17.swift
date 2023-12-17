@@ -6,82 +6,53 @@ private struct State: Hashable {
     let direction: Direction
 }
 
+private func optimalPath(grid: Grid<Int>, validMovementRange: ClosedRange<Int>) -> [Grid<Int>.Point] {
+    let end = Position(x: grid.xRange.upperBound, y: grid.yRange.upperBound)
+    let start = State(position: .init(x: 0, y: 0), direction: .right)
+    let best: [State] = aStar(
+        start: start,
+        finished: { $0.position == end },
+        estimatedCostToFinish: { $0.position.distance(to: end) },
+        candidates: { state in
+            let positions = validMovementRange.compactMap { steps -> (Position, Int)? in
+                let position = state.position.move(in: state.direction, step: steps)
+                guard grid.positions.contains(position) else {
+                    return nil
+                }
+                return (
+                    position,
+                    (1...steps)
+                        .map { state.position.move(in: state.direction, step: $0) }
+                        .map { (position: Position) -> Int in grid.points[position]!.val }
+                        .sum
+                )
+            }
+            return positions
+                .flatMap { position, cost in
+                    return [state.direction.rotate(.left), state.direction.rotate(.right)]
+                        .map { (State(position: position, direction: $0), cost) }
+                }
+        })!
+    let path = zip(best, best.dropFirst())
+        .flatMap { lhs, rhs in
+            let distance = lhs.position.distance(to: rhs.position)
+            return (1...distance).map { lhs.position.move(in: lhs.direction, step: $0) }
+        }
+    return path.map { grid.points[$0]! }
+}
+
 public let day17 = Solution(
     part1: { input in
         let grid = Grid(lines: input.split(whereSeparator: \.isNewline).map { $0.map { Int(String($0))! }})
-        let end = Position(x: grid.xRange.upperBound, y: grid.yRange.upperBound)
-        let start = State(position: .init(x: 0, y: 0), direction: .right)
-        let best: [State] = aStar(
-            start: start,
-            finished: { $0.position == end },
-            estimatedCostToFinish: { $0.position.distance(to: end) },
-            candidates: { state in
-                let positions = (1...3).compactMap { steps -> (Position, Int)? in
-                    let position = state.position.move(in: state.direction, step: steps)
-                    guard grid.positions.contains(position) else {
-                        return nil
-                    }
-                    return (
-                        position,
-                        (1...steps)
-                            .map { state.position.move(in: state.direction, step: $0) }
-                            .map { (position: Position) -> Int in grid.points[position]!.val }
-                            .sum
-                    )
-                }
-                return positions
-                    .flatMap { position, cost in
-                        return [state.direction.rotate(.left), state.direction.rotate(.right)]
-                            .map { (State(position: position, direction: $0), cost) }
-                    }
-            })!
-        let path = zip(best, best.dropFirst())
-            .flatMap { lhs, rhs in
-                let distance = lhs.position.distance(to: rhs.position)
-                return (1...distance).map { lhs.position.move(in: lhs.direction, step: $0) }
-            }
-        let cost = path.map { grid.points[$0]!.val }
+        let path = optimalPath(grid: grid, validMovementRange: 1...3)
         // 1381 is too high, 1059 is too high, 1017 too high
-        return cost.sum
+        return path.map(\.val).sum
     },
     part2: { input in
         let grid = Grid(lines: input.split(whereSeparator: \.isNewline).map { $0.map { Int(String($0))! }})
-        let end = Position(x: grid.xRange.upperBound, y: grid.yRange.upperBound)
-        let all = grid.data.map(\.val).sum
-        let start = State(position: .init(x: 0, y: 0), direction: .right)
-        let best: [State] = aStar(
-            start: start,
-            finished: { $0.position == end },
-            estimatedCostToFinish: { $0.position.distance(to: end) },
-            candidates: { state in
-                let positions = (4...10).compactMap { steps -> (Position, Int)? in
-                    let position = state.position.move(in: state.direction, step: steps)
-                    guard grid.positions.contains(position) else {
-                        return nil
-                    }
-                    return (
-                        position,
-                        (0..<steps)
-                            .map { state.position.move(in: state.direction, step: $0) }
-                            .map { (position: Position) -> Int in grid.points[position]!.val }
-                            .sum
-                    )
-                }
-                return positions
-                    .flatMap { position, cost in
-                        return [state.direction.rotate(.left), state.direction.rotate(.right)]
-                            .map { (State(position: position, direction: $0), cost) }
-                    }
-            })!
-
-        let path = zip(best, best.dropFirst())
-            .flatMap { lhs, rhs in
-                let distance = lhs.position.distance(to: rhs.position)
-                return (1...distance).map { lhs.position.move(in: lhs.direction, step: $0) }
-            }
-        let cost = path.map { grid.points[$0]!.val }
+        let path = optimalPath(grid: grid, validMovementRange: 4...10)
         // 1294 is too high, 1209 is too high, 1207 is too high
-        return cost.sum
+        return path.map(\.val).sum
     },
     testResult: (102, 71),
     testInput: #"""
