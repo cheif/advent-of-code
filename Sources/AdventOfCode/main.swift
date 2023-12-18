@@ -62,6 +62,7 @@ public func solution(year: Int, day: Int) -> (any SolutionProtocol)? {
     case (2023, 15): return AOC2023.day15
     case (2023, 16): return AOC2023.day16
     case (2023, 17): return AOC2023.day17
+    case (2023, 18): return AOC2023.day18
     default: return nil
     }
 }

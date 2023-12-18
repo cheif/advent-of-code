@@ -191,6 +191,19 @@ public extension Direction {
         self = dir
     }
 
+    init?(letter character: Character) {
+        let map: [Character: Self] = [
+            "R": .right,
+            "D": .down,
+            "L": .left,
+            "U": .up
+        ]
+        guard let dir = map[character] else {
+            return nil
+        }
+        self = dir
+    }
+
     var inverted: Self {
         switch self {
         case .up: return .down
