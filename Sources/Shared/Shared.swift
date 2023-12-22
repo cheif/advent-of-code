@@ -39,6 +39,11 @@ public extension ClosedRange where Bound: Numeric {
     func shrinked(by size: Bound) -> Self {
         Self(uncheckedBounds: (lowerBound + size, upperBound - size))
     }
+
+    /// Offsets a range by moving lower + upper bound by specified offset
+    func offset(by offset: Bound) -> Self {
+        Self(uncheckedBounds: (lowerBound + offset, upperBound + offset))
+    }
 }
 
 public extension Range where Bound: Numeric {
