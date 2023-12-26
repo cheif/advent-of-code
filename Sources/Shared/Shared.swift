@@ -466,6 +466,8 @@ public struct Graph<T> {
     }
 }
 
+extension Graph.Edge: Equatable where T: Equatable {}
+
 public func measure<T>(_ name: String? = nil, file: String = #file, line: Int = #line, block: () -> T) -> T {
     var res: T!
     let duration = ContinuousClock().measure {

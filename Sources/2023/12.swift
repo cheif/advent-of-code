@@ -24,11 +24,11 @@ private func arrangements(springs: [Character], broken: [Int]) -> Int {
     }
 }
 
-struct CacheKey: Hashable {
+private struct CacheKey: Hashable {
     let springs: [Character]
     let broken: [Int]
 }
-var groupCache: [CacheKey: Int] = [:]
+private var groupCache: [CacheKey: Int] = [:]
 private func handleGroupsCached(springs: [Character], broken: [Int]) -> Int {
     let cacheKey = CacheKey(springs: springs, broken: broken)
     if let cached = groupCache[cacheKey] {
