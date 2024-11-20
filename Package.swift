@@ -32,6 +32,12 @@ let package = Package(
                 .product(name: "Algorithms", package: "swift-algorithms"),
             ]
         ),
+        .testTarget(
+            name: "AOC2023Tests",
+            dependencies: [
+                "AOC2023",
+            ]
+        ),
         .target(name: "Shared"),
         .testTarget(
             name: "AdventOfCodeTests",
