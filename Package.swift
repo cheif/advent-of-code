@@ -30,8 +30,7 @@ let package = Package(
             dependencies: [
                 "Shared",
                 .product(name: "Algorithms", package: "swift-algorithms"),
-            ],
-            path: "Sources/2023"
+            ]
         ),
         .target(name: "Shared"),
         .testTarget(
