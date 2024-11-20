@@ -38,6 +38,19 @@ let package = Package(
                 "AOC2023",
             ]
         ),
+        .target(
+            name: "AOC2024",
+            dependencies: [
+                "Shared",
+                .product(name: "Algorithms", package: "swift-algorithms"),
+            ]
+        ),
+        .testTarget(
+            name: "AOC2024Tests",
+            dependencies: [
+                "AOC2024",
+            ]
+        ),
         .target(name: "Shared"),
         .testTarget(
             name: "AdventOfCodeTests",
