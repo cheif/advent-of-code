@@ -1,19 +1,5 @@
 import Foundation
 import Shared
-import Testing
-
-@Suite
-struct Day1 {
-    @Test
-    func part1() {
-        #expect(day1.part1(input: day1.testInput) == 142)
-    }
-
-    @Test
-    func part2() {
-        #expect(day1.part2(input: day1.part2TestInput!) == 281)
-    }
-}
 
 func firstDigit(line: String) -> Int {
     for index in line.indices {

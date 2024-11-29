@@ -2,7 +2,7 @@ import AdventOfCode
 import Shared
 import XCTest
 
-extension SolutionProtocol {
+extension TestableSolution {
     func testPart1() {
         XCTAssertEqual(part1(input: testInput), testResult.0)
     }
@@ -16,14 +16,14 @@ class Today: XCTestCase {
     func testPart1() throws {
         let year: Int = Calendar.current.component(.year, from: Date())
         let day: Int = Calendar.current.component(.day, from: Date())
-        let solution = try XCTUnwrap(AdventOfCode.solution(year: year, day: day))
+        let solution = try XCTUnwrap(AdventOfCode.solution(year: year, day: day) as? (any TestableSolution))
         solution.testPart1()
     }
 
     func testPart2() throws {
         let year: Int = Calendar.current.component(.year, from: Date())
         let day: Int = Calendar.current.component(.day, from: Date())
-        let solution = try XCTUnwrap(AdventOfCode.solution(year: year, day: day))
+        let solution = try XCTUnwrap(AdventOfCode.solution(year: year, day: day) as? (any TestableSolution))
         solution.testPart2()
     }
 }
@@ -48,7 +48,7 @@ func createTestSuite(testCase: XCTestCase.Type, year: Int) -> XCTestSuite {
     formatter.minimumIntegerDigits = 2
 
     for day in days {
-        if let solution = AdventOfCode.solution(year: year, day: day) {
+        if let solution = AdventOfCode.solution(year: year, day: day) as? (any TestableSolution) {
             suite.addTest(addMethod(testCase: testCase, name: "testDay\(formatter.string(from: day as NSNumber)!)_part1") {
                 solution.testPart1()
             })

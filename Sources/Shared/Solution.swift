@@ -5,10 +5,13 @@ public protocol SolutionProtocol {
     func part1(input: String) -> Result
     func part2(input: String) -> Result
 
+    var input: String { get }
+}
+
+public protocol TestableSolution: SolutionProtocol {
     var testResult: (Result, Result) { get }
     var testInput: String { get }
     var part2TestInput: String? { get }
-    var input: String { get }
 }
 
 public struct Solution<Result: Equatable> {
@@ -38,7 +41,7 @@ public struct Solution<Result: Equatable> {
     }
 }
 
-extension Solution: SolutionProtocol {
+extension Solution: TestableSolution {
     public func part1(input: String) -> Result {
         part1(input)
     }

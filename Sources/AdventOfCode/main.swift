@@ -2,6 +2,7 @@ import Foundation
 import Shared
 import AOC2022
 import AOC2023
+import AOC2024
 
 // FIXME: Use UTC calendar?
 let year: Int = CommandLine.arguments.dropFirst().first.flatMap { Int($0) } ?? Calendar.current.component(.year, from: Date())
@@ -67,6 +68,7 @@ public func solution(year: Int, day: Int) -> (any SolutionProtocol)? {
     case (2023, 20): return AOC2023.day20
     case (2023, 22): return AOC2023.day22
     case (2023, 23): return AOC2023.day23
+    case (2024, 1): return AOC2024.day1
     default: return nil
     }
 }

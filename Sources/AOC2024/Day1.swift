@@ -1,22 +1,16 @@
-import Testing
+import Shared
 
-@Suite
-struct Day1 {
-    @Test
-    func p1() {
-        #expect(part1(input: "") == 0)
-    }
-
-    @Test
-    func p2() {
-        #expect(part2(input: "") == 0)
-    }
-}
-
-func part1(input: String) -> Int {
+private func part1(input: String) -> Int {
     return 0
 }
 
-func part2(input: String) -> Int {
+private func part2(input: String) -> Int {
     return 0
 }
+
+public let day1 = Solution(
+    part1: part1,
+    part2: part2,
+    input: """
+"""
+)
