@@ -44,6 +44,9 @@ let package = Package(
             dependencies: [
                 "Shared",
                 .product(name: "Algorithms", package: "swift-algorithms"),
+            ],
+            resources: [
+                .process("Resources"),
             ]
         ),
         .testTarget(
