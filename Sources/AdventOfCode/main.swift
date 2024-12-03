@@ -1,12 +1,15 @@
 import Foundation
 import Shared
+import AOC2016
 import AOC2022
 import AOC2023
 import AOC2024
 
 // FIXME: Use UTC calendar?
-let year: Int = CommandLine.arguments.dropFirst().first.flatMap { Int($0) } ?? Calendar.current.component(.year, from: Date())
-let day: Int = CommandLine.arguments.dropFirst(2).first.flatMap { Int($0) } ?? Calendar.current.component(.day, from: Date())
+//let year: Int = CommandLine.arguments.dropFirst().first.flatMap { Int($0) } ?? Calendar.current.component(.year, from: Date())
+//let day: Int = CommandLine.arguments.dropFirst(2).first.flatMap { Int($0) } ?? Calendar.current.component(.day, from: Date())
+let year = 2016
+let day = 1
 
 guard let solution = solution(year: year, day: day) else {
     fatalError("No solution for \(year)-\(day)")
@@ -21,6 +24,7 @@ print("Took: \(duration)")
 
 public func solution(year: Int, day: Int) -> (any SolutionProtocol)? {
     switch (year, day) {
+    case (2016, 1): return AOC2016.day1
     case (2022, 1): return AOC2022.day1
     case (2022, 2): return LegacySolution(AOC2022.day2)
     case (2022, 3): return LegacySolution(AOC2022.day3)

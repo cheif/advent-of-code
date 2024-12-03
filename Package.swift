@@ -16,9 +16,26 @@ let package = Package(
             name: "AdventOfCode",
             dependencies: [
                 "Shared",
+                "AOC2016",
                 "AOC2022",
                 "AOC2023",
                 "AOC2024",
+            ]
+        ),
+        .target(
+            name: "AOC2016",
+            dependencies: [
+                "Shared",
+                .product(name: "Algorithms", package: "swift-algorithms"),
+            ],
+            resources: [
+                .process("Resources"),
+            ]
+        ),
+        .testTarget(
+            name: "AOC2016Tests",
+            dependencies: [
+                "AOC2016",
             ]
         ),
         .target(
