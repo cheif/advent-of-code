@@ -181,6 +181,12 @@ public extension Direction {
     }
 }
 
+public extension Direction {
+    static var diagonals: [[Self]] {
+        Self.allCases.map { [$0, $0.rotate(.right)] }
+    }
+}
+
 
 public extension Direction {
     init?(from character: Character) {
@@ -350,6 +356,10 @@ public extension Grid.Point {
         case .left: return Self(x: x-step, y: y, val: val)
         case .right: return Self(x: x+step, y: y, val: val)
         }
+    }
+
+    func move(in directions: [Direction], step: Int = 1) -> Self {
+        directions.reduce(self) { $0.move(in: $1, step: step) }
     }
 }
 

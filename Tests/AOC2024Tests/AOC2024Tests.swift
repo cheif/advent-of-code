@@ -63,3 +63,27 @@ xmul(2,4)&mul[3,7]!^don't()_mul(5,5)+mul(32,64](mul(11,8)undo()?mul(8,5))
 """) == 48)
     }
 }
+
+struct Day4 {
+    let input = """
+MMMSXXMASM
+MSAMXMSMSA
+AMXSXMAAMM
+MSAMASMSMX
+XMASAMXAMM
+XXAMMXXAMA
+SMSMSASXSS
+SAXAMASAAA
+MAMMMXMMMM
+MXMXAXMASX
+"""
+    @Test
+    func p1() {
+        #expect(day4.part1(input: input) == 18)
+    }
+
+    @Test
+    func p2() {
+        #expect(day4.part2(input: input) == 9)
+    }
+}
