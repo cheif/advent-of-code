@@ -11,8 +11,7 @@ private func part1(input: String) -> Int {
 private func part2(input: String) -> Int {
     let (rules, updates) = parse(input: input)
     let invalid = updates.filter { !isValid(update: $0, rules: rules) }
-    let fixed = invalid.map { fix(update: $0, rules: rules) }
-    let middleNumbers = fixed.map { $0[$0.count / 2] }
+    let middleNumbers = invalid.map { validMiddleNumber(update: $0, rules: rules) }
     return middleNumbers.sum
 }
 
@@ -50,6 +49,15 @@ private func fix(update: [Int], rules: [(Int, Int)]) -> [Int] {
         return before.count == 0
     })
     return [first!] + fix(update: update.filter { $0 != first }, rules: rules)
+}
+
+private func validMiddleNumber(update: [Int], rules: [(Int, Int)]) -> Int {
+    update.first(where: { num in
+        let other = update.filter { $0 != num }
+        let before = rules.filter { $0.1 == num && other.contains($0.0) }.map(\.0)
+        let after = rules.filter { $0.0 == num && other.contains($0.1) }.map(\.1)
+        return after.count == before.count && after.count == update.count / 2
+    })!
 }
 
 public let day5 = Solution(
