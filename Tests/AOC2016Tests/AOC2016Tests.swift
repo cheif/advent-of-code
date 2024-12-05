@@ -40,3 +40,25 @@ UUUUD
 """) == "5DB3")
     }
 }
+
+@Suite
+struct Day3 {
+    @Test
+    func part1() {
+        #expect(day3.part1(input: """
+5 10 25
+""") == 0)
+    }
+
+    @Test
+    func part2() {
+        #expect(day3.part2(input: """
+101 301 501
+102 302 502
+103 303 503
+201 401 601
+202 402 602
+203 403 603
+""") == 6)
+    }
+}
