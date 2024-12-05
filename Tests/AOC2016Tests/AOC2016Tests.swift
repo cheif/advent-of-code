@@ -17,3 +17,26 @@ R8, R4, R4, R8
 """) == 4)
     }
 }
+
+@Suite
+struct Day2 {
+    @Test
+    func part1() {
+        #expect(day2.part1(input: """
+ULL
+RRDDD
+LURDL
+UUUUD
+""") == "1985")
+    }
+
+    @Test
+    func part2() {
+        #expect(day2.part2(input: """
+ULL
+RRDDD
+LURDL
+UUUUD
+""") == "5DB3")
+    }
+}
