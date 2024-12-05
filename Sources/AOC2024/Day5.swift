@@ -3,15 +3,17 @@ import Shared
 
 private func part1(input: String) -> Int {
     let (rules, updates) = parse(input: input)
-    let valid = updates.filter { isValid(update: $0, rules: rules) }
+    let withSorted = updates.map { ($0, sorted(update: $0, rules: rules) )}
+    let valid = withSorted.filter { $0 == $1 }.map(\.1)
     let middleNumbers = valid.map { $0[$0.count / 2] }
     return middleNumbers.sum
 }
 
 private func part2(input: String) -> Int {
     let (rules, updates) = parse(input: input)
-    let invalid = updates.filter { !isValid(update: $0, rules: rules) }
-    let middleNumbers = invalid.map { validMiddleNumber(update: $0, rules: rules) }
+    let withSorted = updates.map { ($0, sorted(update: $0, rules: rules) )}
+    let valid = withSorted.filter { $0 != $1 }.map(\.1)
+    let middleNumbers = valid.map { $0[$0.count / 2] }
     return middleNumbers.sum
 }
 
@@ -27,37 +29,12 @@ private func parse(input: String) -> ([(Int, Int)], [[Int]]) {
     return (rules, updates)
 }
 
-private func isValid(update: [Int], rules: [(Int, Int)]) -> Bool {
-    for i in update.indices {
-        let num = update[i]
-        let after = rules.filter { $0.0 == num }.map(\.1)
-        let before = rules.filter { $0.1 == num }.map(\.0)
-        if update.prefix(upTo: i).contains(where: { after.contains($0) }) ||
-            update.suffix(from: i).contains(where: { before.contains($0) }) {
-            return false
-        }
-    }
-    return true
-}
-
-private func fix(update: [Int], rules: [(Int, Int)]) -> [Int] {
-    guard !update.isEmpty else { return [] }
-    // Find the first one using the rules, and then just fix it recursively
-    let first = update.first(where: { num in
-        let other = update.filter { $0 != num }
-        let before = rules.filter { $0.1 == num }.map(\.0).filter { other.contains($0) }
-        return before.count == 0
-    })
-    return [first!] + fix(update: update.filter { $0 != first }, rules: rules)
-}
-
-private func validMiddleNumber(update: [Int], rules: [(Int, Int)]) -> Int {
-    update.first(where: { num in
+private func sorted(update: [Int], rules: [(Int, Int)]) -> [Int] {
+    update.map { num in
         let other = update.filter { $0 != num }
         let before = rules.filter { $0.1 == num && other.contains($0.0) }.map(\.0)
-        let after = rules.filter { $0.0 == num && other.contains($0.1) }.map(\.1)
-        return after.count == before.count && after.count == update.count / 2
-    })!
+        return (i: before.count, val: num)
+    }.sorted(by: { $0.i < $1.i }).map(\.val)
 }
 
 public let day5 = Solution(
