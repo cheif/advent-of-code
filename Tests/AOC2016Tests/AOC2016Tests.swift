@@ -129,3 +129,26 @@ enarar
         #expect(day6.part2(input: input) == "advent")
     }
 }
+
+@Suite
+struct Day7 {
+    @Test
+    func part1() {
+        #expect(day7.part1(input: """
+abba[mnop]qrst
+abcd[bddb]xyyx
+aaaa[qwer]tyui
+ioxxoj[asdfgh]zxcvbn
+""") == 2)
+    }
+
+    @Test
+    func part2() {
+        #expect(day7.part2(input: """
+aba[bab]xyz
+xyx[xyx]xyx
+aaa[kek]eke
+zazbz[bzb]cdb
+""") == 3)
+    }
+}
