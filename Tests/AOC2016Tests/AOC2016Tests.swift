@@ -62,3 +62,23 @@ struct Day3 {
 """) == 6)
     }
 }
+
+@Suite
+struct Day4 {
+    @Test
+    func part1() {
+        #expect(day4.part1(input: """
+aaaaa-bbb-z-y-x-123[abxyz]
+a-b-c-d-e-f-g-h-987[abcde]
+not-a-real-room-404[oarel]
+totally-real-room-200[decoy]
+""") == 1514)
+    }
+
+    @Test
+    func part2() {
+        #expect(day4.part2(input: """
+qzmt-zixmtkozy-ivhz-343
+""") == 0)
+    }
+}
