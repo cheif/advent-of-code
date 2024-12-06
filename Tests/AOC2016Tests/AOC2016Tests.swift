@@ -82,3 +82,19 @@ qzmt-zixmtkozy-ivhz-343
 """) == 0)
     }
 }
+
+@Suite
+struct Day5 {
+    @Test
+    func part1() {
+        #expect(day5.part1(input: """
+abc
+""") == "18f47a30")
+    }
+
+    @Test
+    func part2() {
+        #expect(day5.part2(input: """
+""") == "")
+    }
+}
