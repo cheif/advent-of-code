@@ -71,6 +71,7 @@ private enum Res {
 }
 private func move(in map: Grid<Character>, visited: [Pos]) -> Res {
     var visited: [Pos] = visited
+    var set = Set(visited)
     while true {
         let current = visited.last!
         let forward = current.position.move(in: current.direction)
@@ -83,10 +84,11 @@ private func move(in map: Grid<Character>, visited: [Pos]) -> Res {
         }
         if !map.positions.contains(new.position) {
             return .outside(visited)
-        } else if visited.contains(new) {
+        } else if set.contains(new) {
             return .looped(visited)
         } else {
             visited.append(new)
+            set.insert(new)
         }
     }
 }
