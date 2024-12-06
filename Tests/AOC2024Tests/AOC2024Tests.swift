@@ -129,3 +129,27 @@ struct Day5 {
         #expect(day5.part2(input: input) == 123)
     }
 }
+
+struct Day6 {
+    let input = """
+....#.....
+.........#
+..........
+..#.......
+.......#..
+..........
+.#..^.....
+........#.
+#.........
+......#...
+"""
+    @Test
+    func p1() {
+        #expect(day6.part1(input: input) == 41)
+    }
+
+    @Test
+    func p2() {
+        #expect(day6.part2(input: input) == 6)
+    }
+}
