@@ -98,3 +98,34 @@ abc
 """) == "")
     }
 }
+
+@Suite
+struct Day6 {
+    let input = """
+eedadn
+drvtee
+eandsr
+raavrd
+atevrs
+tsrnev
+sdttsa
+rasrtv
+nssdts
+ntnada
+svetve
+tesnvt
+vntsnd
+vrdear
+dvrsen
+enarar
+"""
+    @Test
+    func part1() {
+        #expect(day6.part1(input: input) == "easter")
+    }
+
+    @Test
+    func part2() {
+        #expect(day6.part2(input: input) == "advent")
+    }
+}
