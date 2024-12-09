@@ -152,3 +152,22 @@ zazbz[bzb]cdb
 """) == 3)
     }
 }
+
+@Suite
+struct Day8 {
+    @Test
+    func part1() {
+        #expect(day8.part1(input: """
+rect 3x2
+rotate column x=1 by 1
+rotate row y=0 by 4
+rotate column x=1 by 1
+""") == 6)
+    }
+
+    @Test
+    func part2() {
+        #expect(day8.part2(input: """
+""") == 0)
+    }
+}
