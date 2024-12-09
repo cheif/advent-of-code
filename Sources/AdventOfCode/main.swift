@@ -9,7 +9,7 @@ import AOC2024
 //let year: Int = CommandLine.arguments.dropFirst().first.flatMap { Int($0) } ?? Calendar.current.component(.year, from: Date())
 //let day: Int = CommandLine.arguments.dropFirst(2).first.flatMap { Int($0) } ?? Calendar.current.component(.day, from: Date())
 let year = 2016
-let day = 8
+let day = 9
 
 guard let solution = solution(year: year, day: day) else {
     fatalError("No solution for \(year)-\(day)")
@@ -32,6 +32,7 @@ public func solution(year: Int, day: Int) -> (any SolutionProtocol)? {
     case (2016, 6): return AOC2016.day6
     case (2016, 7): return AOC2016.day7
     case (2016, 8): return AOC2016.day8
+    case (2016, 9): return AOC2016.day9
     case (2022, 1): return AOC2022.day1
     case (2022, 2): return LegacySolution(AOC2022.day2)
     case (2022, 3): return LegacySolution(AOC2022.day3)
