@@ -20,29 +20,32 @@ private func part1(input: String) -> Int {
 }
 
 private func part2(input: String) -> Int {
-    var blocks: [[Int?]] = input.map { Int(String($0))! }.chunks(ofCount: 2).enumerated().flatMap { id, chunk in
+    let blocks: [[Int?]] = input.map { Int(String($0))! }.chunks(ofCount: 2).enumerated().flatMap { id, chunk in
         return [(0..<chunk.first!).map { _ in id }, (0..<chunk.last!).map { _ in nil }]
     }
-    let idsToCheck = blocks.compactMap(\.first).compactMap({ $0 }).sorted().reversed()
-    print(idsToCheck.count)
-    for id in idsToCheck {
-        if id % 100 == 0 {
-            print("Checking: \(id)")
-        }
-        let offset = blocks.enumerated().first(where: { $0.element.contains(id) })!.offset
-        let file = blocks[offset]
+    var flattened = blocks.flatMap(\.self)
+    let chunks = Array(flattened.enumerated()).chunked(by: { $0.element == $1.element })
+    let files = chunks.filter { $0.allSatisfy { $0.element != nil }}.reversed()
+    var emptyOffsets = chunks.filter { $0.allSatisfy { $0.element == nil }}
+    for file in files {
         let size = file.count
-        guard let target = blocks.enumerated()
-            .prefix(offset)
-            .first(where: { $0.element.filter { $0 == nil }.count >= size }) else {
+        guard
+            let targetIndex = emptyOffsets.firstIndex(where: { $0.count >= size }),
+            emptyOffsets[targetIndex].first!.offset < file.first!.offset
+        else {
             continue
         }
 
-        blocks[target.offset] = target.element.dropLast(file.count)
-        blocks[offset] = (0..<file.count).map { _ in nil }
-        blocks.insert(file, at: target.offset)
+        let target = emptyOffsets[targetIndex]
+        for p in file {
+            let offset = file.last!.offset - p.offset
+            flattened[target.first!.offset + offset] = p.element
+            flattened[p.offset] = nil
+        }
+
+        emptyOffsets[targetIndex] = target.dropFirst(file.count)
     }
-    return blocks.flatMap { $0 }.enumerated().compactMap { offset, eln in (eln ?? 0) * offset }.sum
+    return flattened.enumerated().compactMap { offset, eln in (eln ?? 0) * offset }.sum
 }
 
 public let day9 = Solution(
