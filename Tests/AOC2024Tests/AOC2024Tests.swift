@@ -202,3 +202,18 @@ struct Day8 {
         #expect(day8.part2(input: input) == 34)
     }
 }
+
+struct Day9 {
+    let input = """
+2333133121414131402
+"""
+    @Test
+    func p1() {
+        #expect(day9.part1(input: input) == 1928)
+    }
+
+    @Test
+    func p2() {
+        #expect(day9.part2(input: input) == 2858)
+    }
+}
