@@ -217,3 +217,25 @@ struct Day9 {
         #expect(day9.part2(input: input) == 2858)
     }
 }
+
+struct Day10 {
+    let input = """
+89010123
+78121874
+87430965
+96549874
+45678903
+32019012
+01329801
+10456732
+"""
+    @Test
+    func p1() {
+        #expect(day10.part1(input: input) == 36)
+    }
+
+    @Test
+    func p2() {
+        #expect(day10.part2(input: input) == 81)
+    }
+}
