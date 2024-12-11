@@ -234,3 +234,19 @@ dec a
         #expect(day12.part2(input: input) == 42)
     }
 }
+
+@Suite
+struct Day13 {
+    let input = """
+10
+"""
+    @Test
+    func part1() {
+        #expect(day13.part1(input: input) == 11)
+    }
+
+    @Test
+    func part2() {
+        #expect(day13.part2(input: input) == 151)
+    }
+}
