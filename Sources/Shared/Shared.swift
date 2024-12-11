@@ -1,3 +1,4 @@
+import CryptoKit
 import Foundation
 
 public func zip3<A, B, C>(_ a: some Sequence<A>, _ b: some Sequence<B>, _ c: some Sequence<C>) -> some Sequence<(A, B, C)> {
@@ -590,4 +591,12 @@ public extension Int {
     init?(_ str: Substring) {
         self.init(String(str))
     }
+}
+
+public func md5(string: String) -> String {
+    let digest = Insecure.MD5.hash(data: Data(string.utf8))
+
+    return digest.map {
+        String(format: "%02hhx", $0)
+    }.joined()
 }
