@@ -585,3 +585,9 @@ private func reconstructPath<State>(cameFrom: [State: State], current: State) ->
     }
     return path
 }
+
+public extension Int {
+    init?(_ str: Substring) {
+        self.init(String(str))
+    }
+}

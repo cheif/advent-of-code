@@ -213,3 +213,24 @@ value 2 goes to bot 2
         #expect(day9.part2(input: input) == 203)
     }
 }
+
+@Suite
+struct Day12 {
+    let input = """
+cpy 41 a
+inc a
+inc a
+dec a
+jnz a 2
+dec a
+"""
+    @Test
+    func part1() {
+        #expect(day12.part1(input: input) == 42)
+    }
+
+    @Test
+    func part2() {
+        #expect(day12.part2(input: input) == 42)
+    }
+}
