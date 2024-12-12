@@ -154,11 +154,54 @@ public extension Grid {
             }
         )
     }
+
+    typealias Region = GridRegion
+    /// Return all "regions" in the grid, AKA connected points with the same value
+    func findRegions() -> [Region] {
+        var regions: [Set<Point>] = []
+        let sorted = data
+            .sorted { $0.x < $1.x }
+            .sorted { $0.y < $1.y }
+        for p in sorted {
+            guard !regions.contains(where: { $0.contains(p) }) else {
+                continue
+            }
+            regions.append(self.expandRegion(region: [p]))
+        }
+        return regions.map { Set($0.map(\.position)) }
+    }
+
+    private func expandRegion(region: Set<Point>) -> Set<Point> {
+        let new = region.flatMap { point in
+            self.neighbours(to: point).values
+                .filter { $0.val == point.val }
+                .filter { !region.contains($0) }
+        }
+        if new.isEmpty {
+            return region
+        } else {
+            return expandRegion(region: Set(new + region))
+        }
+    }
 }
+
+public typealias GridRegion = Set<Position>
 
 public extension Grid.Point {
     func distance(to other: Self) -> Int {
         return abs(other.x - self.x) + abs(other.y - self.y)
+    }
+}
+
+public extension GridRegion {
+    var perimeter: [(position: Position, direction: Direction)] {
+        return self.flatMap { point -> [(Position, Direction)] in
+            Direction.allCases
+                .filter { direction in
+                    !self.contains(point.move(in: direction))
+                }
+                .map { (point, $0) }
+        }
     }
 }
 
@@ -272,6 +315,10 @@ public extension Position {
         case .left: return Self(x: x-step, y: y)
         case .right: return Self(x: x+step, y: y)
         }
+    }
+
+    func move(in directions: [Direction], step: Int = 1) -> Self {
+        directions.reduce(self) { $0.move(in: $1, step: step) }
     }
 }
 

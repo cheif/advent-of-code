@@ -254,3 +254,68 @@ struct Day11 {
         #expect(day11.part2(input: input) == 65601038650482)
     }
 }
+
+struct Day12 {
+    let input = """
+RRRRIICCFF
+RRRRIICCCF
+VVRRRCCFFF
+VVRCCCJFFF
+VVVVCJJCFE
+VVIVCCJJEE
+VVIIICJJEE
+MIIIIIJJEE
+MIIISIJEEE
+MMMISSJEEE
+"""
+    @Test
+    func p1() {
+        #expect(day12.part1(input: input) == 1930)
+    }
+
+    @Test(arguments: [
+        ("""
+AAAA
+BBCD
+BBCC
+EEEC
+""", 80),
+        ("""
+OOOOO
+OXOXO
+OOOOO
+OXOXO
+OOOOO
+""", 436),
+        ("""
+EEEEE
+EXXXX
+EEEEE
+EXXXX
+EEEEE
+""", 236),
+        ("""
+AAAAAA
+AAABBA
+AAABBA
+ABBAAA
+ABBAAA
+AAAAAA
+""", 368),
+        ("""
+RRRRIICCFF
+RRRRIICCCF
+VVRRRCCFFF
+VVRCCCJFFF
+VVVVCJJCFE
+VVIVCCJJEE
+VVIIICJJEE
+MIIIIIJJEE
+MIIISIJEEE
+MMMISSJEEE
+""", 1206),
+    ])
+    func p2(input: String, expected: Int) {
+        #expect(day12.part2(input: input) == expected)
+    }
+}
