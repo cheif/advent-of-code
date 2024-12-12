@@ -95,7 +95,8 @@ abc
     @Test
     func part2() {
         #expect(day5.part2(input: """
-""") == "")
+abc
+""") == "05ace8e3")
     }
 }
 
