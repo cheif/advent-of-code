@@ -35,6 +35,7 @@ public func solution(year: Int, day: Int) -> (any SolutionProtocol)? {
     case (2016, 12): return AOC2016.day12
     case (2016, 13): return AOC2016.day13
     case (2016, 14): return AOC2016.day14
+    case (2016, 15): return AOC2016.day15
     case (2022, 1): return AOC2022.day1
     case (2022, 2): return LegacySolution(AOC2022.day2)
     case (2022, 3): return LegacySolution(AOC2022.day3)

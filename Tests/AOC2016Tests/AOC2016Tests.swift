@@ -267,3 +267,20 @@ abc
         #expect(day14.part2(input: input) == 22551)
     }
 }
+
+@Suite
+struct Day15 {
+    let input = """
+Disc #1 has 5 positions; at time=0, it is at position 4.
+Disc #2 has 2 positions; at time=0, it is at position 1.
+"""
+    @Test
+    func part1() {
+        #expect(day15.part1(input: input) == 5)
+    }
+
+    @Test
+    func part2() {
+        #expect(day15.part2(input: input) == 85)
+    }
+}
