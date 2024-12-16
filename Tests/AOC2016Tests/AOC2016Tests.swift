@@ -284,3 +284,19 @@ Disc #2 has 2 positions; at time=0, it is at position 1.
         #expect(day15.part2(input: input) == 85)
     }
 }
+
+@Suite
+struct Day16 {
+    let input = """
+10000
+"""
+    @Test
+    func part1() {
+        #expect(day16.part1(input: input) == "01100")
+    }
+
+    @Test
+    func part2() {
+        #expect(day16.part2(input: input) == "")
+    }
+}
