@@ -300,3 +300,24 @@ struct Day16 {
         #expect(day16.part2(input: input) == "")
     }
 }
+
+@Suite
+struct Day17 {
+    @Test(arguments: [
+        ("ihgpwlah", "DDRRRD"),
+        ("kglvqrro", "DDUDRLRRUDRD"),
+        ("ulqzkmiv", "DRURDRUDDLLDLUURRDULRLDUUDDDRR"),
+    ])
+    func part1(input: String, expected: String) {
+        #expect(day17.part1(input: input) == expected)
+    }
+
+    @Test(arguments: [
+        ("ihgpwlah", "370"),
+        ("kglvqrro", "492"),
+        ("ulqzkmiv", "830"),
+    ])
+    func part2(input: String, expected: String) {
+        #expect(day17.part2(input: input) == expected)
+    }
+}
