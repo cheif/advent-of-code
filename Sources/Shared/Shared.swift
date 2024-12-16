@@ -525,6 +525,67 @@ public struct Graph<T> {
 }
 
 extension Graph.Edge: Equatable where T: Equatable {}
+extension Graph.Edge: Hashable where T: Hashable {}
+
+public extension Graph where T: Hashable {
+    /// Create a Graph based on a grid, with edges going between all "crossroads".
+
+    /// - Parameters:
+    ///   - grid: A grid
+    ///   - start: The starting point, is generic to facilitate more complex traversals.
+    ///   - atEnd: Block to signal when the endpoint is reached
+    ///   - getCandidates: Generates candidates to test for a block, when this returns two or more item's a "crossroad" has been reached, and we'll fork the graph.
+    init(grid: Grid<Character>, start: T, atEnd: (T) -> Bool, candidates getCandidates: (T) -> [(T, weight: Int)]) {
+        self.init(edges: Self.getEdges(start: start, atEnd: atEnd, getCandidates: getCandidates))
+    }
+
+    private static func getEdges(start: T, atEnd: (T) -> Bool, getCandidates: (T) -> [(T, weight: Int)]) -> [Edge] {
+        var tested = Set<Edge>()
+        var toTest = Set<Edge>(
+        getCandidates(start).map { .init(from: start, to: $0.0, weight: $0.weight) } )
+        var edges: [Graph<T>.Edge] = []
+
+        while !toTest.isEmpty {
+            let curr = toTest.removeFirst()
+            tested.insert(curr)
+            let crossroads = findCrossroads(after: curr.to, atEnd: atEnd) { current in
+                getCandidates(current).filter { $0.0 != curr.from }
+            }
+            if let crossroads {
+                let candidates = getCandidates(crossroads.last!.0).filter { !crossroads.map(\.0).contains($0.0) }
+                toTest.formUnion(candidates.map { .init(from: crossroads.last!.0, to: $0.0, weight: $0.weight) })
+                edges.append(.init(
+                    from: curr.from, 
+                    to: crossroads.last!.0, 
+                    weight: crossroads.map(\.weight).sum + curr.weight
+                ))
+            }
+            toTest.subtract(tested)
+        }
+        return edges
+    }
+
+    private static func findCrossroads(after start: T, atEnd: (T) -> Bool, getCandidates: (T) -> [(T, weight: Int)]) -> [(T, weight: Int)]? {
+        if atEnd(start) {
+            return [(start, 0)]
+        }
+        let candidates = getCandidates(start)
+        if candidates.count == 1 {
+            return findCrossroads(after: candidates[0].0, atEnd: atEnd) { position in
+                getCandidates(position)
+                    .filter { $0.0 != start }
+            }
+                .map { crosses in
+                    crosses.map { ($0.0, $0.weight + candidates[0].weight) }
+                }
+        } else if candidates.count > 1 {
+            return [(start, 0)]
+        } else {
+            return nil
+        }
+    }
+
+}
 
 public func measure<T>(_ name: String? = nil, file: String = #file, line: Int = #line, block: () -> T) -> T {
     var res: T!

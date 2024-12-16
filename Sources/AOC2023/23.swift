@@ -18,57 +18,6 @@ private extension Grid where V == Character {
     }
 }
 
-private func findCrossroads(after start: Position, end: Position, getCandidates: (Position) -> [Position]) -> [Position]? {
-    if start == end {
-        return [end]
-    }
-    let candidates = getCandidates(start)
-    if candidates.count == 1 {
-        return findCrossroads(after: candidates[0], end: end) { position in
-            getCandidates(position).filter { $0 != start }
-        }
-        .map { [start] + $0 }
-    } else if candidates.count > 1 {
-        return [start]
-    } else {
-        return nil
-    }
-}
-
-private func getEdges(start: Position, end: Position, getCandidates: (Position) -> [Position]) -> [Graph<Position>.Edge] {
-    struct Test: Hashable {
-        let cameFrom: Position
-        let position: Position
-    }
-
-    var tested = Set<Test>()
-    var toTest = Set<Test>(
-        getCandidates(start).map { Test(cameFrom: start, position: $0) }
-    )
-    var edges: [Graph<Position>.Edge] = []
-
-    while !toTest.isEmpty {
-        let curr = toTest.removeFirst()
-        tested.insert(curr)
-        let crossroads = findCrossroads(after: curr.position, end: end) { position in
-            getCandidates(position).filter { $0 != curr.cameFrom }
-        }
-        if let crossroads {
-           let candidates = getCandidates(crossroads.last!).filter { !crossroads.contains($0) }
-            toTest.formUnion(candidates.map { Test(cameFrom: crossroads.last!, position: $0) })
-            edges.append(.init(from: curr.cameFrom, to: crossroads.last!, weight: crossroads.count))
-        }
-        toTest.subtract(tested)
-    }
-    return edges
-}
-
-private extension Graph where T == Position {
-    init(grid: Grid<Character>, start: Position, end: Position, getCandidates: (Position) -> [Position]) {
-        self.init(edges: getEdges(start: start, end: end, getCandidates: getCandidates))
-    }
-}
-
 private func longestPath(start: Position, end: Position, graph: Graph<Position>) -> [Graph<Position>.Edge]? {
     if start == end {
         return []
@@ -85,8 +34,12 @@ public let day23 = Solution(
         let grid = Grid(string: input)
         let start = grid.data.filter { $0.y == 0 }.first(where: { $0.val == "." })!.position
         let end = grid.data.filter { $0.y == grid.yRange.upperBound }.first(where: { $0.val == "." })!.position
-        let graph = Graph(grid: grid, start: start, end: end) { position in
-            grid.candidates(from: grid.points[position]!).filter { $0.val != "#" }.map(\.position)
+        let graph = Graph(grid: grid, start: start) {
+            $0 == end
+        } candidates: { position in
+            grid.candidates(from: grid.points[position]!)
+                .filter { $0.val != "#" }.map(\.position)
+                .map { ($0, 1) }
         }
         let longest = longestPath(start: start, end: end, graph: graph)!
 //        print(longest)
@@ -99,8 +52,12 @@ public let day23 = Solution(
         let grid = Grid(string: input)
         let start = grid.data.filter { $0.y == 0 }.first(where: { $0.val == "." })!.position
         let end = grid.data.filter { $0.y == grid.yRange.upperBound }.first(where: { $0.val == "." })!.position
-        let graph = Graph(grid: grid, start: start, end: end) { position in
-            grid.neighbours(to: grid.points[position]!).map(\.value).filter { $0.val != "#" }.map(\.position)
+        let graph = Graph(grid: grid, start: start) {
+            $0 == end
+        } candidates: { position in
+            grid.neighbours(to: grid.points[position]!).map(\.value)
+                .filter { $0.val != "#" }
+                .map { ($0.position, 1) }
         }
         print("edges: \(graph.edges.count)")
         let longest = longestPath(start: start, end: end, graph: graph)!
