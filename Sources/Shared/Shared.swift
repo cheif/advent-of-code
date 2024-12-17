@@ -708,3 +708,13 @@ public func md5(string: String) -> String {
         String(format: "%02hhx", $0)
     }.joined()
 }
+
+public extension Collection {
+    /// Safely gets an element, if it exists.
+    subscript(safe index: Index) -> Element? {
+        guard indices.contains(index) else {
+            return nil
+        }
+        return self[index]
+    }
+}
