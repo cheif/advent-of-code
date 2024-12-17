@@ -358,3 +358,21 @@ struct Day19 {
         #expect(day19.part2(input: input) == expected)
     }
 }
+
+@Suite
+struct Day20 {
+    let input = """
+5-8
+0-2
+4-7
+"""
+    @Test
+    func part1() {
+        #expect(day20.part1(input: input) == 3)
+    }
+
+    @Test
+    func part2() {
+        #expect(day20.part2(input: input) == 2)
+    }
+}
