@@ -497,3 +497,30 @@ struct Day16 {
         #expect(day16.part2(input: largeInput) == 64)
     }
 }
+
+@Suite
+struct Day17 {
+    let input = """
+Register A: 729
+Register B: 0
+Register C: 0
+
+Program: 0,1,5,4,3,0
+"""
+
+    @Test
+    func p1() {
+        #expect(day17.part1(input: input) == "4,6,3,5,6,3,5,2,1,0")
+    }
+
+    @Test
+    func p2() {
+        #expect(day17.part2(input: """
+Register A: 2024
+Register B: 0
+Register C: 0
+
+Program: 0,3,5,4,3,0
+""") == "117440")
+    }
+}
