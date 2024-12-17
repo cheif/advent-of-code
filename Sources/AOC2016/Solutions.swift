@@ -1,7 +1,7 @@
 import Foundation
 import Shared
 
-public struct Solution<Result: Equatable>: SolutionProtocol {
+public struct Solution<Result: Equatable>: SolutionProtocol, @unchecked Sendable {
     let name: String
     let part1: (String) -> Result
     let part2: (String) -> Result

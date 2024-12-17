@@ -75,7 +75,7 @@ extension Range where Bound: Numeric {
     }
 }
 
-public struct Grid<V>: Hashable where V: Equatable, V: Hashable {
+public struct Grid<V>: Sendable, Hashable where V: Equatable, V: Hashable, V: Sendable {
     public let data: Set<Point>
     public let xRange: ClosedRange<Int>
     public let yRange: ClosedRange<Int>
@@ -95,7 +95,7 @@ public struct Grid<V>: Hashable where V: Equatable, V: Hashable {
             data.map { ($0.position, $0) }, uniquingKeysWith: { lhs, _ in lhs })
     }
 
-    public struct Point: Equatable, Hashable, CustomDebugStringConvertible {
+    public struct Point: Sendable, Equatable, Hashable, CustomDebugStringConvertible {
         public let x: Int
         public let y: Int
         public let val: V
@@ -280,7 +280,7 @@ extension Int {
     }
 }
 
-public struct Position: CustomStringConvertible, Hashable, Comparable {
+public struct Position: Sendable, CustomStringConvertible, Hashable, Comparable {
     public let x: Int
     public let y: Int
 

@@ -12,6 +12,7 @@ private func parse(input: String) -> [(springs: [Character], broken: [Int])] {
         }
 }
 
+@MainActor
 private func arrangements(springs: [Character], broken: [Int]) -> Int {
     if springs.isEmpty {
         return broken.isEmpty ? 1 : 0
@@ -28,7 +29,10 @@ private struct CacheKey: Hashable {
     let springs: [Character]
     let broken: [Int]
 }
+
+@MainActor
 private var groupCache: [CacheKey: Int] = [:]
+@MainActor
 private func handleGroupsCached(springs: [Character], broken: [Int]) -> Int {
     let cacheKey = CacheKey(springs: springs, broken: broken)
     if let cached = groupCache[cacheKey] {
@@ -39,6 +43,7 @@ private func handleGroupsCached(springs: [Character], broken: [Int]) -> Int {
     return res
 }
 
+@MainActor
 private func handleGroups(springs: [Character], broken: [Int]) -> Int {
     if broken.isEmpty {
         return 0
@@ -68,18 +73,22 @@ private func handleGroups(springs: [Character], broken: [Int]) -> Int {
 
 public let day12 = Solution(
     part1: { input in
-        let rows = parse(input: input)
-        return rows.map { arrangements(springs: $0.springs, broken: $0.broken) }.sum
+        MainActor.assumeIsolated {
+            let rows = parse(input: input)
+            return rows.map { arrangements(springs: $0.springs, broken: $0.broken) }.sum
+        }
     },
     part2: { input in
-        let rows = parse(input: input)
-        let unfolded = rows.map { springs, broken -> (springs: [Character], broken: [Int]) in
-            return (
-                springs: (1...5).map { _ in springs }.joined(separator: ["?"]).map { $0 },
-                broken: (1...5).reduce([]) { acc, _ in acc + broken }
-            )
+        MainActor.assumeIsolated {
+            let rows = parse(input: input)
+            let unfolded = rows.map { springs, broken -> (springs: [Character], broken: [Int]) in
+                return (
+                    springs: (1...5).map { _ in springs }.joined(separator: ["?"]).map { $0 },
+                    broken: (1...5).reduce([]) { acc, _ in acc + broken }
+                )
+            }
+            return unfolded.map { arrangements(springs: $0.springs, broken: $0.broken) }.sum
         }
-        return unfolded.map { arrangements(springs: $0.springs, broken: $0.broken) }.sum
     },
     testResult: (21, 525152),
     testInput: """

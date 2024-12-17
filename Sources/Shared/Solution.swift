@@ -14,7 +14,7 @@ public protocol TestableSolution: SolutionProtocol {
     var part2TestInput: String? { get }
 }
 
-public struct Solution<Result: Equatable> {
+public struct Solution<Result: Equatable>: @unchecked Sendable {
     public let part1: (String) -> Result
     public let part2: (String) -> Result
 
