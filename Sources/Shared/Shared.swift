@@ -440,6 +440,13 @@ extension RangeReplaceableCollection {
         self.append(element)
         return element
     }
+
+    @discardableResult
+    public mutating func shift(_ k: Int) {
+        let prefix = prefix(k)
+        self.removeFirst(k)
+        self += prefix
+    }
 }
 
 public func maximizeIterative<State: Hashable>(

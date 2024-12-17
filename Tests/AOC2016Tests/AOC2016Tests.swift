@@ -338,3 +338,23 @@ struct Day18 {
 """) == 1935478)
     }
 }
+
+@Suite
+struct Day19 {
+    @Test
+    func part1() {
+        #expect(day19.part1(input: "5") == 3)
+    }
+
+    // Serialized so it's easier to debug
+    @Test(.serialized, arguments: [
+        ("5", 2),
+        ("7", 5),
+        ("11", 2),
+        ("19", 11),
+        ("1001", 272),
+    ])
+    func part2(input: String, expected: Int) {
+        #expect(day19.part2(input: input) == expected)
+    }
+}
