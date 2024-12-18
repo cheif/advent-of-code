@@ -297,7 +297,7 @@ struct Day16 {
 
     @Test
     func part2() {
-        #expect(day16.part2(input: input) == "")
+        #expect(day16.part2(input: input) == "10111110011110111")
     }
 }
 
