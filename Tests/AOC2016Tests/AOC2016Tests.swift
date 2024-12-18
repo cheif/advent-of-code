@@ -376,3 +376,26 @@ struct Day20 {
         #expect(day20.part2(input: input) == 2)
     }
 }
+
+@Suite
+struct Day21 {
+    let input = """
+swap position 4 with position 0
+swap letter d with letter b
+reverse positions 0 through 4
+rotate left 1 step
+move position 1 to position 4
+move position 3 to position 0
+rotate based on position of letter b
+rotate based on position of letter d
+"""
+    @Test
+    func part1() {
+        #expect(day21.part1(input: input) == "decab")
+    }
+
+    @Test
+    func part2() {
+        #expect(day21.part2(input: input) == "deabc")
+    }
+}
