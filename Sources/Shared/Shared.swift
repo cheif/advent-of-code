@@ -732,6 +732,20 @@ extension Int {
     }
 }
 
+/// Memoize a function, to make subsequent invocations instant
+public func memoize<T, U>(_ block: @escaping (T) -> U) -> (T) -> U where T: Hashable {
+    var cache: [T: U] = [:]
+    return { (t: T) -> U in
+        if let u = cache[t] {
+            return u
+        } else {
+            let u = block(t)
+            cache[t] = u
+            return u
+        }
+    }
+}
+
 public func md5(string: String) -> String {
     let digest = Insecure.MD5.hash(data: Data(string.utf8))
 

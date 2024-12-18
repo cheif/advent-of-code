@@ -2,65 +2,45 @@ import Foundation
 import Shared
 
 private func part1(input: String) -> Int {
-    MainActor.assumeIsolated {
-        var keys: [(Int, String)] = []
-        var i = 0
-        while keys.count < 64 {
-            let hash = md5Cached(string: input + String(i))
-            if let triple = findTriple(string: hash) {
-                let nextThousand = (0..<1000).map { md5Cached(string: input + String(i + 1 + $0)) }
-                if nextThousand.contains(where: { $0.contains(triple) }) {
-                    keys.append((i, hash))
-                }
+    let memoizedMD5 = memoize(md5)
+    var keys: [(Int, String)] = []
+    var i = 0
+    while keys.count < 64 {
+        let hash = memoizedMD5(input + String(i))
+        if let triple = findTriple(string: hash) {
+            let nextThousand = (0..<1000).map { memoizedMD5(input + String(i + 1 + $0)) }
+            if nextThousand.contains(where: { $0.contains(triple) }) {
+                keys.append((i, hash))
             }
-            i += 1
         }
-        return keys.last!.0
+        i += 1
     }
+    return keys.last!.0
 }
 
 private func part2(input: String) -> Int {
-    MainActor.assumeIsolated { 
-        var keys: [(Int, String)] = []
-        var i = 0
-        while keys.count < 64 {
-            let hash = stretched(string: input + String(i))
-            if let triple = findTriple(string: hash) {
-                let nextThousand = (0..<1000).map { stretched(string: input + String(i + 1 + $0)) }
-                if nextThousand.contains(where: { $0.contains(triple) }) {
-                    keys.append((i, hash))
-                }
+    let memoizedMD5 = memoize(md5)
+    let memoizedStretched = memoize {
+        stretched(string: $0, md5: memoizedMD5)
+    }
+    var keys: [(Int, String)] = []
+    var i = 0
+    while keys.count < 64 {
+        let hash = memoizedStretched(String(i))
+        if let triple = findTriple(string: hash) {
+            let nextThousand = (0..<1000).map { memoizedStretched(String(i + 1 + $0)) }
+            if nextThousand.contains(where: { $0.contains(triple) }) {
+                keys.append((i, hash))
             }
-            i += 1
         }
-        // 15019 is too low
-        return keys.last!.0
+        i += 1
     }
+    // 15019 is too low
+    return keys.last!.0
 }
 
-@MainActor
-private var stretchedCache: [String: String] = [:]
-@MainActor
-private func stretched(string: String) -> String {
-    if let stretched = stretchedCache[string] {
-        return stretched
-    }
-    let stretched = (0...2016).reduce(string) { str, _ in md5(string: str) }
-    stretchedCache[string] = stretched
-    return stretched
-}
-
-@MainActor
-private var cache: [String: String] = [:]
-@MainActor
-private func md5Cached(string: String) -> String {
-    if let match = cache[string] {
-        return match
-    }
-
-    let match = md5(string: string)
-    cache[string] = match
-    return match
+private func stretched(string: String, md5: (String) -> String) -> (String) {
+    return (0...2016).reduce(string) { str, _ in md5(str) }
 }
 
 private func findTriple(string: String) -> String? {
