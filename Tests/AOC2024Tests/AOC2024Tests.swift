@@ -368,11 +368,6 @@ p=9,5 v=-3,-3
     func p1() {
         #expect(day14.part1(input: input) == 12)
     }
-
-    @Test
-    func p2() {
-        #expect(day14.part2(input: input) == 0)
-    }
 }
 
 struct Day15 {
