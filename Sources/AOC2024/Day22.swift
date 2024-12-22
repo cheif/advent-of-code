@@ -8,46 +8,40 @@ private func part1(input: String) -> Int {
 
 private func part2(input: String) -> Int {
     let numbers = input.split(whereSeparator: \.isNewline).map { Int($0)! }
-    //let numbers = [123]
     let evolutions = numbers.map { num in
         (0..<2000).reductions(num) { n, _ in evolve(number: n, iterations: 1) }
     }
-    let prices = evolutions.map { evl in 
+    let prices = evolutions.map { evl in
         evl.map { $0 % 10 }
     }
-    let withChanges = prices.map { evl in 
-        evl.indices.dropFirst(4).map { index in 
+
+    var indexed: [[Int]: [Int: Int]] = [:]
+    for (pIndex, evl) in prices.enumerated() {
+        for index in evl.indices.dropFirst(4) {
             let changes = [
-                evl[index-3] - evl[index-4],
-                evl[index-2] - evl[index-3],
-                evl[index-1] - evl[index-2],
-                evl[index] - evl[index-1]
+                evl[index - 3] - evl[index - 4],
+                evl[index - 2] - evl[index - 3],
+                evl[index - 1] - evl[index - 2],
+                evl[index] - evl[index - 1],
             ]
-            return (changes: changes, evl[index])
-        }
-    }
-    let indexed = withChanges.map { wc in 
-        wc.grouped(by: \.changes).mapValues { v in 
-            v.first!.1
+            if indexed[changes] == nil {
+                indexed[changes] = [:]
+            }
+            if indexed[changes]![pIndex] == nil {
+                indexed[changes]![pIndex] = evl[index]
+            }
         }
     }
 
-    let possibleChanges = (0..<4).reduce([[]]) {acc, _ -> [[Int]] in 
-        (-9...9).flatMap { new in 
+    let possibleChanges = (0..<4).reduce([[]]) { acc, _ -> [[Int]] in
+        (-9...9).flatMap { new in
             acc.map {
                 $0 + [new]
             }
         }
     }
-    print(possibleChanges.count)
-    print(withChanges.count)
     let scores = possibleChanges.enumerated().map { idx, changes in
-        if idx % 1000 == 0 {
-            print("at", idx)
-        }
-        return indexed.map { wc in 
-            wc[changes] ?? 0
-        }.sum
+        return indexed[changes, default: [:]].values.sum
     }
     return scores.max()!
 }
@@ -71,7 +65,7 @@ private func mix(a: Int, b: Int) -> Int {
 }
 
 private func prune(_ n: Int) -> Int {
-    n % 16777216
+    n % 16_777_216
 }
 
 public let day22 = Solution(
