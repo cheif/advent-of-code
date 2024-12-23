@@ -663,3 +663,51 @@ struct Day22 {
 """) == 23)
     }
 }
+
+@Suite
+struct Day23 {
+    let input = """
+kh-tc
+qp-kh
+de-cg
+ka-co
+yn-aq
+qp-ub
+cg-tb
+vc-aq
+tb-ka
+wh-tc
+yn-cg
+kh-ub
+ta-co
+de-co
+tc-td
+tb-wq
+wh-td
+ta-ka
+td-qp
+aq-cg
+wq-ub
+ub-vc
+de-ta
+wq-aq
+wq-vc
+wh-yn
+ka-de
+kh-ta
+co-tc
+wh-qp
+tb-vc
+td-yn
+"""
+
+    @Test
+    func p1() {
+        #expect(day23.part1(input: input) == "7")
+    }
+
+    @Test
+    func p2() {
+        #expect(day23.part2(input: input) == "co,de,ka,ta")
+    }
+}
