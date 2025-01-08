@@ -425,3 +425,20 @@ Filesystem            Size  Used  Avail  Use%
         #expect(day22.part2(input: input) == 7)
     }
 }
+
+@Suite
+struct Day23 {
+    let input = """
+cpy 2 a
+tgl a
+tgl a
+tgl a
+cpy 1 a
+dec a
+dec a
+"""
+    @Test
+    func part1() {
+        #expect(day23.part1(input: input) == 3)
+    }
+}
