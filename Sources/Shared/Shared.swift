@@ -684,16 +684,18 @@ public func aStar<State: Hashable>(
     start: State,
     finished: (State) -> Bool,
     estimatedCostToFinish: (State) -> Int,
+    log: (String) -> Void = { _ in },
     candidates: (State) -> [(State, cost: Int)]
 ) -> [State]? {
-    var open = Set([start])
     var cameFrom: [State: State] = [:]
     var gScore: [State: Int] = [start: 0]
-    var fScore: [State: Int] = [start: estimatedCostToFinish(start)]
+    var open: [State: Int] = [start: estimatedCostToFinish(start)]
 
+    var iterations = 0
     while !open.isEmpty {
-        let current = open.min(by: { fScore[$0]! < fScore[$1]! })!
-        open.remove(current)
+        iterations += 1
+        let current = open.min(by: { $0.value < $1.value })!.key
+        open.removeValue(forKey: current)
         if finished(current) {
             return reconstructPath(cameFrom: cameFrom, current: current)
         }
@@ -708,9 +710,13 @@ public func aStar<State: Hashable>(
             } else {
                 cameFrom[neighbour] = current
                 gScore[neighbour] = tentativeGScore
-                fScore[neighbour] = tentativeGScore + estimatedCostToFinish(neighbour)
-                open.insert(neighbour)
+                open[neighbour] = tentativeGScore + estimatedCostToFinish(neighbour)
             }
+        }
+        if iterations % 100 == 0 {
+            log(
+                "Iteration: \(iterations), open: \(open.count), gScore: \(gScore[current]!), estimatedCostToFinish: \(estimatedCostToFinish(current))"
+            )
         }
     }
     return nil
