@@ -442,3 +442,23 @@ dec a
         #expect(day23.part1(input: input) == 3)
     }
 }
+
+@Suite
+struct Day24 {
+    let input = """
+###########
+#0.1.....2#
+#.#######.#
+#4.......3#
+###########
+"""
+    @Test
+    func part1() {
+        #expect(day24.part1(input: input) == 14)
+    }
+
+    @Test
+    func part2() {
+        #expect(day24.part2(input: input) == 20)
+    }
+}
