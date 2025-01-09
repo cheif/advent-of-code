@@ -5,10 +5,11 @@ struct Assembunny {
             $0.split(separator: " ").map { String($0) }
         }
         let withAdds = insertAddWhereApplicable(instructions: parsed)
-        instructions = insertMulWhereApplicable(instructions: withAdds)
+        let withSubs = insertSubwhereApplicable(instructions: withAdds)
+        instructions = insertMulWhereApplicable(instructions: withSubs)
     }
 
-    func run(registers: [String: Int]) -> [String: Int] {
+    func run(registers: [String: Int], output: (Int) -> Bool = { _ in false }) -> [String: Int] {
         var registers = registers
         var instructions = self.instructions
         var pc = 0
@@ -34,7 +35,11 @@ struct Assembunny {
             case "jnz":
                 if registers[ins[1]] != 0 {
                     let offset = Int(ins[2]) ?? registers[ins[2]]!
-                    pc += offset
+                    if offset == 0 {
+                        pc += 1
+                    } else {
+                        pc += offset
+                    }
                 } else {
                     pc += 1
                 }
@@ -56,13 +61,22 @@ struct Assembunny {
             case "add":
                 registers[ins[1]]! += registers[ins[2]] ?? Int(ins[2])!
                 pc += 1
+            case "sub":
+                registers[ins[1]]! -= registers[ins[2]] ?? Int(ins[2])!
+                pc += 1
             case "mul":
                 registers[ins[1]]! *= registers[ins[2]] ?? Int(ins[2])!
+                pc += 1
+            case "out":
+                let value = registers[ins[1]] ?? Int(ins[1])!
+                let halt = output(value)
+                if halt {
+                    return registers
+                }
                 pc += 1
             default:
                 fatalError()
             }
-
         }
         return registers
     }
@@ -97,6 +111,39 @@ private func insertAddWhereApplicable(instructions: [[String]]) -> [[String]] {
     return instructions
 }
 
+private func insertSubwhereApplicable(instructions: [[String]]) -> [[String]] {
+    // If we have this pattern, with random registers, we're actually seeing an "sub b x"
+    // cpy x c
+    // jnz b 2
+    // ---
+    // dec b
+    // dec c
+    // jnz c -4
+    return instructions
+    var instructions = instructions
+    for off in instructions.indices {
+        let ins = instructions[off]
+
+        // Check match backward
+        if ins[0] == "jnz" && Int(ins[2]) == -4,
+            instructions[off - 1] == ["dec", ins[1]],
+            instructions[off - 2][0] == "dec",
+            instructions[off - 5][0] == "cpy" && instructions[off - 5][2] == ins[1]
+        {
+            // We've got a match, replace by sub, and insert nop:s
+            let target = instructions[off - 2][1]
+            let source = instructions[off - 5][1]
+            instructions[off] = ["nop"]
+            instructions[off - 1] = ["nop"]
+            instructions[off - 2] = ["nop"]
+            instructions[off - 5] = ["sub", target, source]
+        }
+    }
+
+    return instructions
+
+}
+
 private func insertMulWhereApplicable(instructions: [[String]]) -> [[String]] {
     // If we have this pattern, with random registers, we're actually seeing an "mul a b"
     // cpy a d
@@ -114,21 +161,35 @@ private func insertMulWhereApplicable(instructions: [[String]]) -> [[String]] {
         // Check match backward
         if ins[0] == "jnz" && Int(ins[2]) == -5,
             instructions[off - 1] == ["dec", ins[1]],
-            instructions[off - 2][0] == "add",
-            instructions[off - 6][0] == "cpy" && instructions[off - 6][1] == "0",
-            instructions[off - 7][0] == "cpy" && instructions[off - 7][2] == ins[1]
+            instructions[off - 2][0] == "add"
         {
-            // We've got a register multiply, replace by mul, and insert nop:s
-            let target = instructions[off - 2][1]
-            let source = instructions[off - 2][2]
-            instructions[off] = ["mul", target, source]
-            instructions[off - 1] = ["nop"]
-            instructions[off - 2] = ["nop"]
-            instructions[off - 3] = ["nop"]
-            instructions[off - 4] = ["nop"]
-            instructions[off - 5] = ["nop"]
-            instructions[off - 6] = ["nop"]
-            instructions[off - 7] = ["nop"]
+            if instructions[off - 6][0] == "cpy" && instructions[off - 6][1] == "0",
+                instructions[off - 7][0] == "cpy" && instructions[off - 7][2] == ins[1]
+            {
+                // We've got a register multiply, replace by mul, and insert nop:s
+                let target = instructions[off - 2][1]
+                let source = instructions[off - 2][2]
+                instructions[off] = ["mul", target, source]
+                instructions[off - 1] = ["nop"]
+                instructions[off - 2] = ["nop"]
+                instructions[off - 3] = ["nop"]
+                instructions[off - 4] = ["nop"]
+                instructions[off - 5] = ["nop"]
+                instructions[off - 6] = ["nop"]
+                instructions[off - 7] = ["nop"]
+            } else if instructions[off - 6][0] == "cpy" && Int(instructions[off - 6][1]) != nil {
+                // We've got a integer multiply, replace by mul follewed by add, and insert nop:s
+                let mulSource = instructions[off - 2][2]
+                let source = instructions[off][1]
+                instructions[off - 1] = ["mul", source, mulSource]
+
+                let target = instructions[off - 2][1]
+                instructions[off] = ["add", target, source]
+                instructions[off - 2] = ["nop"]
+                instructions[off - 3] = ["nop"]
+                instructions[off - 4] = ["nop"]
+                instructions[off - 5] = ["nop"]
+            }
         }
     }
 
