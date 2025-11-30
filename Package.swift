@@ -6,10 +6,10 @@ import PackageDescription
 let package = Package(
     name: "advent-of-code",
     platforms: [
-        .macOS(.v15),
+        .macOS(.v15)
     ],
     dependencies: [
-        .package(url: "https://github.com/apple/swift-algorithms", from: "1.2.0"),
+        .package(url: "https://github.com/apple/swift-algorithms", from: "1.2.0")
     ],
     targets: [
         .executableTarget(
@@ -20,6 +20,7 @@ let package = Package(
                 "AOC2022",
                 "AOC2023",
                 "AOC2024",
+                "AOC2025",
             ]
         ),
         .target(
@@ -29,13 +30,13 @@ let package = Package(
                 .product(name: "Algorithms", package: "swift-algorithms"),
             ],
             resources: [
-                .process("Resources"),
+                .process("Resources")
             ]
         ),
         .testTarget(
             name: "AOC2016Tests",
             dependencies: [
-                "AOC2016",
+                "AOC2016"
             ]
         ),
         .target(
@@ -53,7 +54,7 @@ let package = Package(
         .testTarget(
             name: "AOC2023Tests",
             dependencies: [
-                "AOC2023",
+                "AOC2023"
             ]
         ),
         .target(
@@ -63,13 +64,29 @@ let package = Package(
                 .product(name: "Algorithms", package: "swift-algorithms"),
             ],
             resources: [
-                .process("Resources"),
+                .process("Resources")
             ]
         ),
         .testTarget(
             name: "AOC2024Tests",
             dependencies: [
-                "AOC2024",
+                "AOC2024"
+            ]
+        ),
+        .target(
+            name: "AOC2025",
+            dependencies: [
+                "Shared",
+                .product(name: "Algorithms", package: "swift-algorithms"),
+            ],
+            resources: [
+                .process("Resources")
+            ]
+        ),
+        .testTarget(
+            name: "AOC2025Tests",
+            dependencies: [
+                "AOC2025"
             ]
         ),
         .target(name: "Shared"),
@@ -78,6 +95,6 @@ let package = Package(
             dependencies: [
                 "AdventOfCode"
             ]
-        )
+        ),
     ]
 )

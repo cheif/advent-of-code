@@ -1,13 +1,18 @@
-import Foundation
-import Shared
 import AOC2016
 import AOC2022
 import AOC2023
 import AOC2024
+import AOC2025
+import Foundation
+import Shared
 
 // FIXME: Use UTC calendar?
-let year: Int = CommandLine.arguments.dropFirst().first.flatMap { Int($0) } ?? Calendar.current.component(.year, from: Date())
-let day: Int = CommandLine.arguments.dropFirst(2).first.flatMap { Int($0) } ?? Calendar.current.component(.day, from: Date())
+let year: Int =
+    CommandLine.arguments.dropFirst().first.flatMap { Int($0) }
+    ?? Calendar.current.component(.year, from: Date())
+let day: Int =
+    CommandLine.arguments.dropFirst(2).first.flatMap { Int($0) }
+    ?? Calendar.current.component(.day, from: Date())
 
 guard let solution = solution(year: year, day: day) else {
     fatalError("No solution for \(year)-\(day)")
@@ -118,6 +123,31 @@ public func solution(year: Int, day: Int) -> (any SolutionProtocol)? {
     case (2024, 23): return AOC2024.day23
     case (2024, 24): return AOC2024.day24
     case (2024, 25): return AOC2024.day25
+    case (2025, 1): return AOC2025.day1
+    // case (2025, 2): return AOC2025.day2
+    // case (2025, 3): return AOC2025.day3
+    // case (2025, 4): return AOC2025.day4
+    // case (2025, 5): return AOC2025.day5
+    // case (2025, 6): return AOC2025.day6
+    // case (2025, 7): return AOC2025.day7
+    // case (2025, 8): return AOC2025.day8
+    // case (2025, 9): return AOC2025.day9
+    // case (2025, 10): return AOC2025.day10
+    // case (2025, 11): return AOC2025.day11
+    // case (2025, 12): return AOC2025.day12
+    // case (2025, 13): return AOC2025.day13
+    // case (2025, 14): return AOC2025.day14
+    // case (2025, 15): return AOC2025.day15
+    // case (2025, 16): return AOC2025.day16
+    // case (2025, 17): return AOC2025.day17
+    // case (2025, 18): return AOC2025.day18
+    // case (2025, 19): return AOC2025.day19
+    // case (2025, 20): return AOC2025.day20
+    // case (2025, 21): return AOC2025.day21
+    // case (2025, 22): return AOC2025.day22
+    // case (2025, 23): return AOC2025.day23
+    // case (2025, 24): return AOC2025.day24
+    // case (2025, 25): return AOC2025.day25
     default: return nil
     }
 }
