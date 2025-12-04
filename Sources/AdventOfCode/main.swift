@@ -126,7 +126,7 @@ public func solution(year: Int, day: Int) -> (any SolutionProtocol)? {
     case (2025, 1): return AOC2025.day1
     case (2025, 2): return AOC2025.day2
     case (2025, 3): return AOC2025.day3
-    // case (2025, 4): return AOC2025.day4
+    case (2025, 4): return AOC2025.day4
     // case (2025, 5): return AOC2025.day5
     // case (2025, 6): return AOC2025.day6
     // case (2025, 7): return AOC2025.day7

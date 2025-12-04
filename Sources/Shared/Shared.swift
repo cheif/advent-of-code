@@ -121,6 +121,25 @@ public struct Grid<V>: Sendable, Hashable where V: Equatable, V: Hashable, V: Se
         ]
     }
 
+    /// Returns all adjacent points, vertically, horizontally and diagonally
+    public func adjacentAll(to point: Point) -> [Point] {
+        let candidates: [Position] = [
+            Position(x: point.x - 1, y: point.y - 1),
+            Position(x: point.x, y: point.y - 1),
+            Position(x: point.x + 1, y: point.y - 1),
+
+            Position(x: point.x - 1, y: point.y),
+            Position(x: point.x + 1, y: point.y),
+
+            Position(x: point.x - 1, y: point.y + 1),
+            Position(x: point.x, y: point.y + 1),
+            Position(x: point.x + 1, y: point.y + 1),
+        ]
+        return candidates.compactMap { position in
+            self.points[position]
+        }
+    }
+
     /// Return the closes neighbour to a point, keyed on the direction from the original point
     public func neighbours(to point: Point) -> [Direction: Point] {
         let candidates: [Direction: Position] = [
