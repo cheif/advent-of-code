@@ -30,8 +30,46 @@ extension Collection {
 }
 
 extension ClosedRange {
+    public init?(_ string: some StringProtocol) where Bound == Int {
+        let parts = string.split(separator: "-").compactMap { Int($0) }
+        guard parts.count == 2 else { return nil }
+        self = parts[0]...parts[1]
+    }
+
     public func fullyContains(_ other: ClosedRange) -> Bool {
         lowerBound <= other.lowerBound && upperBound >= other.upperBound
+    }
+
+    public func overlaps(_ other: ClosedRange) -> Bool {
+        self.contains(other.lowerBound) || self.contains(other.upperBound)
+            || self.fullyContains(other) || other.fullyContains(self)
+    }
+
+    public func merged(with other: Self) -> Self {
+        let lower = Swift.min(self.lowerBound, other.lowerBound)
+        let upper = Swift.max(self.upperBound, other.upperBound)
+        return lower...upper
+    }
+}
+
+extension [ClosedRange<Int>] {
+    /// Returns a new array of `ClosedRange`, where all ranges that overlap have been merged
+    public func mergeOverlapping() -> Self {
+        var new = [self[0]]
+        for range in self.dropFirst(1) {
+            let firstOverlap = new.firstIndex(where: { $0.overlaps(range) })
+            if let firstOverlap {
+                let newRange = new[firstOverlap]
+                new[firstOverlap] = newRange.merged(with: range)
+            } else {
+                new.append(range)
+            }
+        }
+        if new != self {
+            return new.mergeOverlapping()
+        } else {
+            return new
+        }
     }
 }
 
