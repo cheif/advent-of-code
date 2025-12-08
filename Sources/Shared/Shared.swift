@@ -417,6 +417,13 @@ extension Point3D {
     public func distance(to other: Self) -> Int {
         return abs(other.x - self.x) + abs(other.y - self.y) + abs(other.z - self.z)
     }
+
+    public func euclideanDistance(to other: Self) -> Double {
+        return
+            (pow(Double(other.x - self.x), 2) + pow(Double(other.y - self.y), 2)
+            + pow(Double(other.z - self.z), 2))
+            .squareRoot()
+    }
 }
 
 public struct Grid3D: Equatable {
