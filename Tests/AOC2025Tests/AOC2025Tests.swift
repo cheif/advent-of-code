@@ -304,3 +304,38 @@ struct Day8 {
                     """) == 25272)
     }
 }
+
+@Suite
+struct Day9 {
+    @Test
+    func p1() {
+        #expect(
+            day9.part1(
+                input: """
+                    7,1
+                    11,1
+                    11,7
+                    9,7
+                    9,5
+                    2,5
+                    2,3
+                    7,3
+                    """) == 50)
+    }
+
+    @Test
+    func p2() {
+        #expect(
+            day9.part2(
+                input: """
+                    7,1
+                    11,1
+                    11,7
+                    9,7
+                    9,5
+                    2,5
+                    2,3
+                    7,3
+                    """) == 24)
+    }
+}
