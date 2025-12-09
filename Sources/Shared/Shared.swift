@@ -180,12 +180,13 @@ public struct Grid<V>: Sendable, Hashable where V: Equatable, V: Hashable, V: Se
 
     /// Return the closes neighbour to a point, keyed on the direction from the original point
     public func neighbours(to point: Point) -> [Direction: Point] {
-        let candidates: [Direction: Position] = [
-            .left: Position(x: point.x - 1, y: point.y),
-            .right: Position(x: point.x + 1, y: point.y),
-            .up: Position(x: point.x, y: point.y - 1),
-            .down: Position(x: point.x, y: point.y + 1),
-        ]
+        neighbours(to: Position(x: point.x, y: point.y))
+    }
+
+    public func neighbours(to position: Position) -> [Direction: Point] {
+        let candidates: [Direction: Position] = Dictionary(
+            uniqueKeysWithValues: Direction.allCases.map { ($0, position.move(in: $0)) }
+        )
         return candidates.compactMapValues { position in
             self.points[position]
         }
@@ -346,6 +347,13 @@ public struct Position: Sendable, CustomStringConvertible, Hashable, Comparable 
         self.y = y
     }
 
+    public init?<S: StringProtocol>(string: S) {
+        let splits = string.split(separator: ",").compactMap { Int($0) }
+        guard splits.count == 2 else { return nil }
+        self.x = splits[0]
+        self.y = splits[1]
+    }
+
     public var description: String {
         "Position(x: \(x), y: \(y))"
     }
@@ -381,6 +389,16 @@ extension Position {
 
     public func move(in directions: [Direction], step: Int = 1) -> Self {
         directions.reduce(self) { $0.move(in: $1, step: step) }
+    }
+}
+
+extension Collection<Position> {
+    public var xRange: ClosedRange<Int> {
+        map(\.x).range()
+    }
+
+    public var yRange: ClosedRange<Int> {
+        map(\.y).range()
     }
 }
 
@@ -439,6 +457,7 @@ public struct Grid3D: Equatable {
 }
 
 public func plot(_ points: [(position: Position, symbol: String)]) {
+    let symbols: [Position: String] = Dictionary(uniqueKeysWithValues: points)
     let allPositions = points.map(\.position)
     let xRange = allPositions.map(\.x).range()
     let yRange = allPositions.map(\.y).range()
@@ -447,7 +466,7 @@ public func plot(_ points: [(position: Position, symbol: String)]) {
             xRange
             .map { x in
                 let position = Position(x: x, y: y)
-                return points.last(where: { pos, _ in pos == position })?.symbol ?? "."
+                return symbols[position] ?? "."
             }
             .joined()
         return "\(y)".padding(toLength: 5, withPad: " ", startingAt: 0) + line
@@ -510,6 +529,11 @@ extension RangeReplaceableCollection {
         self.removeFirst(k)
         self += prefix
     }
+
+    public func shifted(_ k: Int = 1) -> [Element] {
+        return self.dropFirst() + [self.first!]
+    }
+
 }
 
 public func maximizeIterative<State: Hashable>(
